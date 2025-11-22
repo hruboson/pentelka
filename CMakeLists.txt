@@ -15,9 +15,9 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick LinguistTools)
 set(TS_FILES pentelka_en_US.ts)
 
 set(PROJECT_SOURCES
-        main.cpp
-        qml.qrc
-        ${TS_FILES}
+    src/main.cpp
+    qml.qrc
+    ${TS_FILES}
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
