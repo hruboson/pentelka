@@ -16,6 +16,7 @@ set(TS_FILES pentelka_en_US.ts)
 
 set(PROJECT_SOURCES
     src/main.cpp
+    src/canvas/item/canvasitem.h src/canvas/item/canvasitem.cpp
     qml.qrc
     ${TS_FILES}
 )
