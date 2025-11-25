@@ -3,8 +3,6 @@ import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Dialogs
 
-import Pentelka
-
 ApplicationWindow {
     id: root
     width: 800
@@ -12,18 +10,42 @@ ApplicationWindow {
     visible: true
     title: "Pentelka"
 
-    CanvasItem {
-        id: canvas
-        anchors.fill: parent
-        penColor: "black"
-        penWidth: 3
+	Canvas {
+		id: canvas
+		anchors {
+			left: parent.left
+			right: parent.right
+			top: parent.top
+			bottom: parent.bottom
+			margins: 8
+		}
+		property real lastX
+		property real lastY
+		property color color: "#000000"
 
-        MouseArea {
-            anchors.fill: parent
-            onPressed: canvas.startDraw(mouse.x, mouse.y)
-            onPositionChanged: canvas.drawTo(mouse.x, mouse.y)
-        }
-    }
+		onPaint: {
+			var ctx = getContext('2d')
+			ctx.lineWidth = 2 
+			ctx.strokeStyle = canvas.color
+			ctx.beginPath()
+			ctx.moveTo(lastX, lastY)
+			lastX = area.mouseX
+			lastY = area.mouseY
+			ctx.lineTo(lastX, lastY)
+			ctx.stroke()
+		}
+		MouseArea {
+			id: area
+			anchors.fill: parent
+			onPressed: {
+				canvas.lastX = mouseX
+				canvas.lastY = mouseY
+			}
+			onPositionChanged: {
+				canvas.requestPaint()
+			}
+		}
+	}
 
     // File dialogs
     /*FileDialog {
@@ -47,7 +69,7 @@ ApplicationWindow {
     }*/
 
     // Color picker
-    ColorDialog {
+    /*ColorDialog {
         id: colorDialog
         title: "Select Pen Color"
         onAccepted: canvas.penColor = color
@@ -62,5 +84,5 @@ ApplicationWindow {
         //Button { text: "Open"; onClicked: openDialog.open() }
         //Button { text: "Save"; onClicked: saveDialog.open() }
         Button { text: "Pen Color"; onClicked: colorDialog.open() }
-    }
+	}*/
 }

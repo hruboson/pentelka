@@ -13,12 +13,9 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick LinguistTools)
 
 set(TS_FILES pentelka_en_US.ts)
 set(PROJECT_SOURCES
-        main.cpp
-		canvas/item/canvasitem.cpp
-        qml.qrc
-        ${TS_FILES}
-    qml.qrc
-    ${TS_FILES}
+	main.cpp
+	qml.qrc
+	${TS_FILES}
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

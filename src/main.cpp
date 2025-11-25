@@ -1,16 +1,15 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QLoggingCategory>
 
 #include <QLocale>
 #include <QTranslator>
 
-#include "canvas/item/canvasitem.h"
-
 int main(int argc, char *argv[])
 {
-    QGuiApplication app(argc, argv);
+    QLoggingCategory::setFilterRules(QStringLiteral("qt.qml.warning=true\nqt.qml.info=true"));
 
-    qmlRegisterType<CanvasItem>("Pentelka", 1, 0, "CanvasItem");
+    QGuiApplication app(argc, argv);
 
     QQmlApplicationEngine engine;
     engine.load(QUrl(QStringLiteral("qrc:qml/main.qml")));
