@@ -45,6 +45,7 @@ CMakeLists.txt.user*
 
 # Vim temporary files
 .*.swp
+.clangd
 
 # Visual Studio generated files
 *.ib_pdb_index
