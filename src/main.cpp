@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<CanvasItem>("Pentelka", 1, 0, "CanvasItem");
 
     QQmlApplicationEngine engine;
-    engine.load(QUrl(QStringLiteral("qrc:/src/qml/main.qml")));
+    engine.load(QUrl(QStringLiteral("qrc:qml/main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
 
