@@ -19,6 +19,7 @@
 *.*#
 core
 !core/
+.cache*/
 tags
 .DS_Store
 .directory
@@ -38,6 +39,7 @@ Thumbs.db
 # qtcreator generated files
 *.pro.user*
 CMakeLists.txt.user*
+*compile_commands*
 
 # xemacs temporary files
 *.flc
@@ -72,3 +74,4 @@ CMakeLists.txt.user*
 *.dll
 *.exe
 build/
+build*/
