@@ -36,16 +36,16 @@ endif
 
 run: default
 ifeq ($(OS),Windows_NT)
-	$(TARGET_APP)
+	build\$(TARGET_APP)
 else
-	./$(TARGET_APP)
+	./build/$(TARGET_APP)
 endif
 
 # ---------------------------------------------------------
 # Build using CMake + Ninja
 # ---------------------------------------------------------
 
-cmake_build: clean_build
+cmake_build:
 	$(CMAKE) -S src -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 	$(CMAKE_BUILD) $(BUILD_DIR)
 
