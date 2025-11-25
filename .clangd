@@ -1,0 +1,10 @@
+CompileFlags:
+  Add: [
+    "--gcc-toolchain=S:/Dev/Qt/Tools/mingw1310_64",
+    "-D__SIZEOF_FLOAT128__=0",
+    "--target=x86_64-w64-mingw32",
+    "-isystemS:/Dev/Qt/Tools/mingw1310_64/include/",
+    "-isystemS:/Dev/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/c++/",
+    "-isystemS:/Dev/Qt/Tools/mingw1310_64/lib/gcc/x86_64-w64-mingw32/13.1.0/include/",
+    "-isystemS:/Dev/Qt/Tools/mingw1310_64/x86_64-w64-mingw32/include/",
+  ]
