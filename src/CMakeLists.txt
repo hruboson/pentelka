@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(pentelka VERSION 0.1 LANGUAGES CXX)
+# Project name
+set(APP_NAME Pentelka)
+
+project(${APP_NAME} VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -8,47 +11,33 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick LinguistTools)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick LinguistTools)
+# Qt6 only
+find_package(Qt6 REQUIRED COMPONENTS Core Quick LinguistTools)
 
 set(TS_FILES pentelka_en_US.ts)
+
 set(PROJECT_SOURCES
-	main.cpp
-	qml.qrc
-	${TS_FILES}
+    main.cpp
+    qml.qrc
+    ${TS_FILES}
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(pentelka
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-    )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET pentelka APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
+# Executable
+qt_add_executable(${APP_NAME}
+    MANUAL_FINALIZATION
+    ${PROJECT_SOURCES}
+)
 
+# Translations
 qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
-else()
-    if(ANDROID)
-        add_library(pentelka SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(pentelka
-          ${PROJECT_SOURCES}
-        )
-    endif()
+# Link Qt6
+target_link_libraries(${APP_NAME}
+    PRIVATE Qt6::Core Qt6::Quick
+)
 
-    qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
-endif()
-
-target_link_libraries(pentelka
-  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick)
-set_target_properties(pentelka PROPERTIES
+# Target properties (macOS & Windows)
+set_target_properties(${APP_NAME} PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
@@ -56,11 +45,12 @@ set_target_properties(pentelka PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
-install(TARGETS pentelka
+# Install
+install(TARGETS ${APP_NAME}
     BUNDLE DESTINATION .
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_import_qml_plugins(pentelka)
-    qt_finalize_executable(pentelka)
-endif()
+# Qt6 finalization
+qt_import_qml_plugins(${APP_NAME})
+qt_finalize_executable(${APP_NAME})

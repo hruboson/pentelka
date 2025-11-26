@@ -30,8 +30,6 @@ default: cmake_build
 ifeq ($(OS),Windows_NT)
 	@echo "Deploying Qt DLLs..."
 	$(DEPLOY) $(BUILD_DIR)/$(TARGET_APP)
-else
-	cp $(BUILD_DIR)/$(TARGET_APP) ./
 endif
 
 run: default
