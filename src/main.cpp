@@ -1,6 +1,6 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include <QLoggingCategory>
+#include <QtLogging>
 #include <QQmlContext>
 
 #include <QLocale>
@@ -9,9 +9,15 @@
 #include "painter/painter.hpp"
 #include "painter/imageprovider.hpp"
 
+void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+    if (QString(context.category) == "qml") { // filter only messages created by app qml
+        QTextStream(stdout) << msg << Qt::endl;
+    }
+}
+
 int main(int argc, char *argv[])
 {
-    QLoggingCategory::setFilterRules(QStringLiteral("qt.qml.warning=true\nqt.qml.info=true"));
+    qInstallMessageHandler(messageHandler);
 
     QGuiApplication app(argc, argv);
 	QQmlApplicationEngine engine;
@@ -24,5 +30,6 @@ int main(int argc, char *argv[])
     if (engine.rootObjects().isEmpty())
         return -1;
 
+	// Run app
     return app.exec();
 }
