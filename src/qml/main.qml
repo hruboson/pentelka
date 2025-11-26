@@ -53,7 +53,9 @@ ApplicationWindow {
 
     Connections {
         target: painter
-        onBufferChanged: paintImage.source = "image://painter/current?" + Math.random()
+		function onBufferChanged() {
+			paintImage.source = "image://painter/current?" + Math.random()
+		}
     }
 
     // File dialogs
