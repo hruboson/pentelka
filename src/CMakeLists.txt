@@ -5,6 +5,7 @@ set(APP_NAME Pentelka)
 
 project(${APP_NAME} VERSION 0.1 LANGUAGES CXX)
 
+# Variables
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -14,7 +15,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Qt6 only
 find_package(Qt6 REQUIRED COMPONENTS Core Quick LinguistTools)
 
-set(TS_FILES pentelka_en_US.ts)
+set(TS_FILES translations/pentelka_en_US.ts translations/pentelka_en.ts)
 
 set(PROJECT_SOURCES
     main.cpp
