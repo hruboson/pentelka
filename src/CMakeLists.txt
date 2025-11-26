@@ -21,6 +21,8 @@ set(PROJECT_SOURCES
     main.cpp
     qml.qrc
     ${TS_FILES}
+
+	painter/painter.cpp
 )
 
 # Executable
