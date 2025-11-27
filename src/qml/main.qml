@@ -11,7 +11,7 @@ ApplicationWindow {
 	visible: true
 	title: "Pentelka"
 
-	property color penColor: "black"
+	property color penColor: "#000000"
 
 	menuBar: MenuBar {
 		Menu {
@@ -78,7 +78,11 @@ ApplicationWindow {
 	ColorDialog {
 		id: colorDialog
 		title: "Select Tool Color"
-		onAccepted: penColor = color
+	    selectedColor: penColor
+		onAccepted: {
+			penColor = selectedColor
+			console.log(penColor)
+		}
 	}
 
 	// background gray
