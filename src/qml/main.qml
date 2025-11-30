@@ -6,8 +6,8 @@ import QtQuick.Controls
 
 ApplicationWindow {
 	id: root
-	width: 800
-	height: 600
+	width: 1200
+	height: 800
 	visible: true
 	title: "Pentelka"
 
@@ -38,7 +38,7 @@ ApplicationWindow {
 	// left vertical bar with tools
 	Rectangle {
 		id: toolbar
-		width: columnContent.implicitWidth + 10
+		width: toolsColumn.implicitWidth + 10
 		anchors.top: parent.top
 		anchors.bottom: parent.bottom
 		anchors.left: parent.left
@@ -46,7 +46,7 @@ ApplicationWindow {
 		z: 1
 
 		Column {
-			id: columnContent
+			id: toolsColumn
 			anchors.fill: parent
 			spacing: 10
 			anchors.margins: 5
@@ -81,6 +81,8 @@ ApplicationWindow {
 		id: topBar
 		height: 30
 		width: strokeSliderRow.implicitWidth + 30
+		anchors.topMargin: 20
+
 		anchors.top: parent.top
 		anchors.horizontalCenter: parent.horizontalCenter
 
