@@ -11,9 +11,9 @@ public:
     explicit Painter(QObject *parent = nullptr);
 	
 	// drawing tools
-	Q_INVOKABLE void setPixel(int x, int y, const QColor &color);
-	Q_INVOKABLE void drawLine(const QPoint &from, const QPoint &to, const QColor &color);
-	Q_INVOKABLE void drawWuLine(const QPoint &from, const QPoint &to, const QColor &color); // better line algorithm
+	Q_INVOKABLE void setPixel(int x, int y, const QColor &color, int width);
+	Q_INVOKABLE void drawLine(const QPoint &from, const QPoint &to, const QColor &color, int width);
+	Q_INVOKABLE void drawWuLine(const QPoint &from, const QPoint &to, const QColor &color, int width); // better line algorithm
 
 	// utilities
     Q_INVOKABLE bool loadImage(const QString &path);
@@ -32,5 +32,4 @@ private:
     QImage image_buffer; // canvas content stored here
     QTimer *updateTimer;
     bool pendingUpdate = false;
-
 };

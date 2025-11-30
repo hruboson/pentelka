@@ -25,7 +25,7 @@ ApplicationWindow {
 		}
 		Menu {
 			title: qsTr("&Edit")
-			Action { text: qsTr("Cu&t") }
+			Action { text: qsTr("&Cut") }
 			Action { text: qsTr("&Copy") }
 			Action { text: qsTr("&Paste") }
 		}
@@ -35,6 +35,7 @@ ApplicationWindow {
 		}
 	}
 
+	// left vertical bar with tools
 	Rectangle {
 		id: toolbar
 		width: columnContent.implicitWidth + 10
@@ -75,6 +76,45 @@ ApplicationWindow {
 		}
 	}
 
+	// floating top bar with stroke width slider
+	Rectangle {
+		id: topBar
+		height: 30
+		width: strokeSliderRow.implicitWidth + 30
+		anchors.top: parent.top
+		anchors.horizontalCenter: parent.horizontalCenter
+
+		color: "#f0f0f0"
+		z: 999
+		radius: 10 
+		border.width: 1
+		border.color: "#b0b0b0"
+
+		Row {
+			id: strokeSliderRow
+			anchors.centerIn: parent
+			spacing: 5
+
+			Slider {
+				id: strokeSlider
+
+				from: 1
+				to: 100
+				value: 5
+				width: 200
+
+				onValueChanged: {
+					painter.strokeWidth = value
+				}
+			}
+
+			Text {
+				text: Math.round(strokeSlider.value).toString()
+				verticalAlignment: Text.AlignVCenter
+			}
+		}
+	}
+
 	ColorDialog {
 		id: colorDialog
 		title: "Select Tool Color"
@@ -111,12 +151,12 @@ ApplicationWindow {
 				anchors.fill: parent
 				onPressed: (mouse) => {
 					canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
-					painter.setPixel(mouse.x, mouse.y, penColor)
+					painter.setPixel(mouse.x, mouse.y, penColor, strokeSlider.value)
 				}
 
 				onPositionChanged: (mouse) => {
 					if (canvasContainer.lastPoint) {
-						painter.drawWuLine(canvasContainer.lastPoint, Qt.point(mouse.x, mouse.y), penColor)
+						painter.drawLine(canvasContainer.lastPoint, Qt.point(mouse.x, mouse.y), penColor, strokeSlider.value)
 					}
 					canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
 				}            
@@ -151,22 +191,4 @@ ApplicationWindow {
 			 canvas.saveImage(selectedFile)
 		 }
 	 }*/
-
-	 // Color picker
-	 /*ColorDialog {
-		  id: colorDialog
-		  title: "Select Pen Color"
-		  onAccepted: canvas.penColor = color
-	  }
-
-	  Row {
-		  spacing: 10
-		  anchors.bottom: parent.bottom
-		  anchors.horizontalCenter: parent.horizontalCenter
-
-		  Button { text: "Clear"; onClicked: canvas.clear() }
-		  //Button { text: "Open"; onClicked: openDialog.open() }
-		  //Button { text: "Save"; onClicked: saveDialog.open() }
-		  Button { text: "Pen Color"; onClicked: colorDialog.open() }
-	  }*/
-  }
+}
