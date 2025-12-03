@@ -1,6 +1,6 @@
 #pragma once
 
-enum DRAWINGTOOLS {
+enum TOOLS {
 	BRUSH,
 	SPRAY,
 	ERASER,

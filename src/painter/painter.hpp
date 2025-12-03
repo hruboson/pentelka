@@ -42,9 +42,10 @@ signals:
 private:
 	QColor backgroundColor = Qt::white;
     QImage image_buffer; // canvas content stored here
+	QImage preview_buffer;
     QTimer *updateTimer;
     bool pendingUpdate = false;
 
 	// Tool to paint with
-	DRAWINGTOOLS selectedTool = DRAWINGTOOLS::BRUSH;
+	TOOLS selectedTool = TOOLS::BRUSH;
 };

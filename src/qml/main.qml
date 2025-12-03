@@ -64,6 +64,10 @@ ApplicationWindow {
 				text: "Eraser"
 				onClicked: painter.selectEraser();
 			}
+			Button {
+				text: "Text"
+				onClicked: painter.selectText();
+			}
 
 			// separator
 			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }

@@ -14,6 +14,9 @@ Painter::Painter(QObject *parent)
 	image_buffer = QImage(800, 600, QImage::Format_ARGB32_Premultiplied);
     image_buffer.fill(Qt::white);
 
+	preview_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+	preview_buffer.fill(Qt::transparent);
+
     updateTimer = new QTimer(this);
     updateTimer->setInterval(16); // ~60 FPS, put FPS in settings later
     connect(updateTimer, &QTimer::timeout, [this]() {
@@ -27,27 +30,27 @@ Painter::Painter(QObject *parent)
 
 
 void Painter::selectSpray(){
-	selectedTool = DRAWINGTOOLS::SPRAY;
+	selectedTool = TOOLS::SPRAY;
 }
 
 void Painter::selectBrush(){
-	selectedTool = DRAWINGTOOLS::BRUSH;
+	selectedTool = TOOLS::BRUSH;
 }
 
 void Painter::selectEraser(){
-	selectedTool = DRAWINGTOOLS::ERASER;
+	selectedTool = TOOLS::ERASER;
 }
 
 
 void Painter::draw(const QPoint &from, const QPoint &to, const QColor &color, int width){
 	switch(selectedTool){
-		case DRAWINGTOOLS::BRUSH:
+		case TOOLS::BRUSH:
 			drawLine(from, to, color, width);
 			break;
-		case DRAWINGTOOLS::SPRAY:
+		case TOOLS::SPRAY:
 			sprayAt(to, color, width);
 			break;
-		case DRAWINGTOOLS::ERASER:
+		case TOOLS::ERASER:
 			drawLine(from, to, backgroundColor, width);
 			break;
 		default:
@@ -263,7 +266,13 @@ void Painter::floodFill(int x, int y, const QColor &color) {
 }
 
 QImage Painter::getBuffer() const {
-    return image_buffer;
+	QImage combined = image_buffer.copy();
+
+	QPainter p(&combined);
+	p.drawImage(0, 0, preview_buffer);
+	p.end();
+
+	return combined;
 }
 
 void Painter::flush() {
