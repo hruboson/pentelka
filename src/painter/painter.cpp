@@ -25,6 +25,36 @@ Painter::Painter(QObject *parent)
     updateTimer->start();
 }
 
+
+void Painter::selectSpray(){
+	selectedTool = DRAWINGTOOLS::SPRAY;
+}
+
+void Painter::selectBrush(){
+	selectedTool = DRAWINGTOOLS::BRUSH;
+}
+
+void Painter::selectEraser(){
+	selectedTool = DRAWINGTOOLS::ERASER;
+}
+
+
+void Painter::draw(const QPoint &from, const QPoint &to, const QColor &color, int width){
+	switch(selectedTool){
+		case DRAWINGTOOLS::BRUSH:
+			drawLine(from, to, color, width);
+			break;
+		case DRAWINGTOOLS::SPRAY:
+			sprayAt(to, color, width);
+			break;
+		case DRAWINGTOOLS::ERASER:
+			drawLine(from, to, backgroundColor, width);
+			break;
+		default:
+			break;
+	}
+}
+
 void Painter::setPixel(int x, int y, const QColor &color, int width) {
     if (width <= 1) {
         if (x >= 0 && y >= 0 && x < image_buffer.width() && y < image_buffer.height()) {
@@ -174,6 +204,33 @@ void Painter::drawWuLine(const QPoint &from, const QPoint &to, const QColor &col
     }
 }
 
+void Painter::sprayAt(const QPoint &pos, const QColor &color, int radius){
+    // radius determines spray area
+    int particles = radius * 20;   // spray density
+
+    for (int i = 0; i < particles; ++i) {
+
+        // random angle & distance (uniform circular distribution)
+        float angle = (float(rand()) / RAND_MAX) * 2.0f * M_PI;
+
+        float dist = std::sqrt(float(rand()) / RAND_MAX) * radius;
+
+        int sx = pos.x() + std::cos(angle) * dist;
+        int sy = pos.y() + std::sin(angle) * dist;
+
+        // bounds check
+        if (sx < 0 || sy < 0 ||
+            sx >= image_buffer.width() ||
+            sy >= image_buffer.height())
+            continue;
+
+        // spray dot — 1px with color
+        image_buffer.setPixelColor(sx, sy, color);
+    }
+
+    pendingUpdate = true;
+}
+
 bool Painter::loadImage(const QString &path) {
     QImage img;
     if (!img.load(path))
@@ -192,7 +249,7 @@ void Painter::resizeBuffer(int width, int height) {
         return;
 
     QImage newBuffer(width, height, QImage::Format_ARGB32_Premultiplied);
-    newBuffer.fill(Qt::white);
+    newBuffer.fill(backgroundColor);
 
     QPainter p(&newBuffer);
     p.drawImage(0, 0, image_buffer);

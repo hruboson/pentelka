@@ -54,15 +54,15 @@ ApplicationWindow {
 			// brush type buttons
 			Button {
 				text: "Brush"
-				onClicked: console.log("Brush selected")
+				onClicked: painter.selectBrush();
 			}
 			Button {
 				text: "Spray"
-				onClicked: console.log("Spray selected")
+				onClicked: painter.selectSpray();
 			}
 			Button {
 				text: "Eraser"
-				onClicked: console.log("Eraser selected")
+				onClicked: painter.selectEraser();
 			}
 
 			// separator
@@ -153,12 +153,12 @@ ApplicationWindow {
 				anchors.fill: parent
 				onPressed: (mouse) => {
 					canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
-					painter.setPixel(mouse.x, mouse.y, penColor, strokeSlider.value)
+					painter.draw(canvasContainer.lastPoint, canvasContainer.lastPoint, penColor, strokeSlider.value)
 				}
 
 				onPositionChanged: (mouse) => {
 					if (canvasContainer.lastPoint) {
-						painter.drawLine(canvasContainer.lastPoint, Qt.point(mouse.x, mouse.y), penColor, strokeSlider.value)
+						painter.draw(canvasContainer.lastPoint, Qt.point(mouse.x, mouse.y), penColor, strokeSlider.value)
 					}
 					canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
 				}            

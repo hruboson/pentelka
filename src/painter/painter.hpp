@@ -1,5 +1,7 @@
 #pragma once
 
+#include "tools.hpp"
+
 #include <QObject>
 #include <QImage>
 #include <QColor>
@@ -9,11 +11,20 @@ class Painter : public QObject
     Q_OBJECT
 public:
     explicit Painter(QObject *parent = nullptr);
+
+	// main drawing function
+	Q_INVOKABLE void draw(const QPoint &from, const QPoint &to, const QColor &color, int width); // continuous function
+
+	// tool selectors (should be called in qml)
+	Q_INVOKABLE void selectBrush();
+	Q_INVOKABLE void selectSpray();
+	Q_INVOKABLE void selectEraser();
 	
 	// drawing tools
 	Q_INVOKABLE void setPixel(int x, int y, const QColor &color, int width);
 	Q_INVOKABLE void drawLine(const QPoint &from, const QPoint &to, const QColor &color, int width);
 	Q_INVOKABLE void drawWuLine(const QPoint &from, const QPoint &to, const QColor &color, int width); // better line algorithm
+	Q_INVOKABLE void sprayAt(const QPoint &at, const QColor &color, int width);
 
 	// utilities
     Q_INVOKABLE bool loadImage(const QString &path);
@@ -29,7 +40,11 @@ signals:
 	void bufferChanged();
 
 private:
+	QColor backgroundColor = Qt::white;
     QImage image_buffer; // canvas content stored here
     QTimer *updateTimer;
     bool pendingUpdate = false;
+
+	// Tool to paint with
+	DRAWINGTOOLS selectedTool = DRAWINGTOOLS::BRUSH;
 };
