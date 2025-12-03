@@ -4,4 +4,5 @@ enum TOOLS {
 	BRUSH,
 	SPRAY,
 	ERASER,
+	TEXT,
 };

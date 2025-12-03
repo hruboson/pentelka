@@ -19,12 +19,17 @@ public:
 	Q_INVOKABLE void selectBrush();
 	Q_INVOKABLE void selectSpray();
 	Q_INVOKABLE void selectEraser();
+	Q_INVOKABLE void selectNewText();
 	
 	// drawing tools
 	Q_INVOKABLE void setPixel(int x, int y, const QColor &color, int width);
 	Q_INVOKABLE void drawLine(const QPoint &from, const QPoint &to, const QColor &color, int width);
 	Q_INVOKABLE void drawWuLine(const QPoint &from, const QPoint &to, const QColor &color, int width); // better line algorithm
 	Q_INVOKABLE void sprayAt(const QPoint &at, const QColor &color, int width);
+
+	// text tools
+	Q_INVOKABLE void updateText(const QString &text, const QPoint &pos, const QColor &color, int fontSize);
+	Q_INVOKABLE void commitText();
 
 	// utilities
     Q_INVOKABLE bool loadImage(const QString &path);
@@ -48,4 +53,13 @@ private:
 
 	// Tool to paint with
 	TOOLS selectedTool = TOOLS::BRUSH;
+
+	// text tools
+	// TODO create function that draws preview from everything, then the same 
+	// function will be used in commiting the text but this time without all the preview stuff
+	bool caretVisible = true;
+	QString currentText;
+	QPoint textPos;
+	int textFontSize;
+	QColor textColor;
 };

@@ -13,6 +13,8 @@ ApplicationWindow {
 
 	property color penColor: "#000000"
 
+	property bool textMode: false
+
 	menuBar: MenuBar {
 		Menu {
 			title: qsTr("&File")
@@ -54,19 +56,32 @@ ApplicationWindow {
 			// brush type buttons
 			Button {
 				text: "Brush"
-				onClicked: painter.selectBrush();
+				onClicked: {
+					painter.selectBrush()
+					textMode = false;
+				}
 			}
 			Button {
 				text: "Spray"
-				onClicked: painter.selectSpray();
+				onClicked: {
+					painter.selectSpray()
+					textMode = false;
+				}
 			}
 			Button {
 				text: "Eraser"
-				onClicked: painter.selectEraser();
+				onClicked: {
+					painter.selectEraser();
+					textMode = false;
+				}
 			}
 			Button {
 				text: "Text"
-				onClicked: painter.selectText();
+				onClicked: {
+					painter.selectNewText()
+					textMode = true
+					console.log("Entered text mode")
+				}
 			}
 
 			// separator
@@ -124,50 +139,95 @@ ApplicationWindow {
 	ColorDialog {
 		id: colorDialog
 		title: "Select Tool Color"
-	    selectedColor: penColor
+		selectedColor: penColor
 		onAccepted: {
 			penColor = selectedColor
 			console.log(penColor)
 		}
 	}
 
+
 	// background gray
 	Rectangle {
 		anchors.fill: parent
 		color: "#CCCCCC"
 
-		// canvas
-		Rectangle {
-			id: canvasContainer
-			width: 800
-			height: 600
-			anchors.centerIn: parent
-			color: "white" // canvas background
+		FocusScope {
+			anchors.fill: parent
+			focus: true
 
-			property var lastPoint: null
-
-			Image {
-				id: paintImage
-				anchors.fill: parent
-				source: "image://painter/current"
-				fillMode: Image.PreserveAspectFit  // prevent stretching
+			Keys.onPressed: (event) => {
+				if (textMode) {
+					canvasContainer.handleKey(event.key, event.text)
+					event.accepted = true
+				}
 			}
 
-			MouseArea {
-				anchors.fill: parent
-				onPressed: (mouse) => {
-					canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
-					painter.draw(canvasContainer.lastPoint, canvasContainer.lastPoint, penColor, strokeSlider.value)
+			// canvas
+			Rectangle {
+				id: canvasContainer
+				width: 800
+				height: 600
+				anchors.centerIn: parent
+
+				property var lastPoint: null
+				property point textInsertPos: Qt.point(0,0)
+				property string currentText: ""
+
+				function handleKey(key, text) {
+					if (key === Qt.Key_Backspace) {
+						currentText = currentText.slice(0, -1)
+					} else if (key === Qt.Key_Escape) { // exit text mode
+						painter.commitText()
+						currentText = ""
+						textMode = false
+						console.log("Exiting text mode")
+					} else if (text.length > 0) {
+						currentText += text
+					}
+
+					painter.updateText(canvasContainer.currentText, canvasContainer.lastPoint, root.penColor, strokeSlider.value)
+					console.log("Text: ", currentText)
 				}
 
-				onPositionChanged: (mouse) => {
-					if (canvasContainer.lastPoint) {
-						painter.draw(canvasContainer.lastPoint, Qt.point(mouse.x, mouse.y), penColor, strokeSlider.value)
+				Image {
+					id: paintImage
+					anchors.fill: parent
+					source: "image://painter/current"
+					// fillMode: Image.PreserveAspectFit  // prevent stretching
+				}
+
+				MouseArea {
+					anchors.fill: parent
+					onPressed: (mouse) => {
+						canvasContainer.forceActiveFocus()
+						if (textMode) {
+							if (currentText !== "") {
+								// clicking while text exists commits the text
+								painter.commitText()
+								currentText = ""
+								textMode = false;
+								console.log("Exiting text mode")
+							}
+
+							//TODO FIX THIS
+							textInsertPos = Qt.point(mouse.x, mouse.y)
+							console.log("New position: ", textInsertPos)
+						} else {
+							canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
+							painter.draw(canvasContainer.lastPoint, canvasContainer.lastPoint, penColor, strokeSlider.value)
+						}
 					}
-					canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
-				}            
+
+					onPositionChanged: (mouse) => {
+						if (canvasContainer.lastPoint) {
+							painter.draw(canvasContainer.lastPoint, Qt.point(mouse.x, mouse.y), penColor, strokeSlider.value)
+						}
+						canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
+					}            
+				}
 			}
-		}
+		}	
 	}
 
 	Connections {
@@ -197,4 +257,4 @@ ApplicationWindow {
 			 canvas.saveImage(selectedFile)
 		 }
 	 }*/
-}
+ }

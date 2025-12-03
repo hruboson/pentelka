@@ -1,8 +1,11 @@
 #include "painter.hpp"
 
-#include <QPainter>
 #include <cmath>
+#include <iostream>
+
+#include <QPainter>
 #include <QTimer>
+#include <QDebug>
 
 static inline int ipart(float x) { return static_cast<int>(std::floor(x)); }
 static inline float fpart(float x) { return x - std::floor(x); }
@@ -41,6 +44,9 @@ void Painter::selectEraser(){
 	selectedTool = TOOLS::ERASER;
 }
 
+void Painter::selectNewText(){
+	selectedTool = TOOLS::TEXT;
+}
 
 void Painter::draw(const QPoint &from, const QPoint &to, const QColor &color, int width){
 	switch(selectedTool){
@@ -53,10 +59,16 @@ void Painter::draw(const QPoint &from, const QPoint &to, const QColor &color, in
 		case TOOLS::ERASER:
 			drawLine(from, to, backgroundColor, width);
 			break;
+		case TOOLS::TEXT:
+			break;
 		default:
 			break;
 	}
 }
+
+/************************
+ *		PAINT TOOLS		*
+ ***********************/
 
 void Painter::setPixel(int x, int y, const QColor &color, int width) {
     if (width <= 1) {
@@ -233,6 +245,64 @@ void Painter::sprayAt(const QPoint &pos, const QColor &color, int radius){
 
     pendingUpdate = true;
 }
+
+/************************
+ *		TEXT TOOLS 		*
+ ***********************/
+
+void Painter::updateText(const QString &text, const QPoint &pos, const QColor &color, int fontSize){
+    // clear previous preview
+    preview_buffer.fill(Qt::transparent);
+
+	//std::cout << "Painting at " << pos.x() << "|" << pos.y() << std::endl;
+
+    QPainter p(&preview_buffer);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.setRenderHint(QPainter::TextAntialiasing);
+
+    QFont font;
+    font.setPointSize(fontSize);
+    p.setFont(font);
+
+    p.setPen(color);
+    p.drawText(pos, text);
+
+	if (caretVisible) {
+		QPen caretPen(color);
+		caretPen.setWidth(2); // caret thickness
+		p.setPen(caretPen);
+
+		QFontMetrics fm(font);
+		int textWidth = fm.horizontalAdvance(text);  // width of current text
+		int caretHeight = fm.height();
+
+		// draw vertical line at end of text
+		p.drawLine(pos.x() + textWidth, pos.y() - fm.ascent(),
+				pos.x() + textWidth, pos.y() - fm.ascent() + caretHeight);
+	}
+
+    p.end();
+
+    pendingUpdate = true;
+}
+
+void Painter::commitText(){
+	QPainter p(&image_buffer);
+    p.setCompositionMode(QPainter::CompositionMode_SourceOver);
+    p.drawImage(0, 0, preview_buffer);
+    p.end();
+
+    // reset preview state
+    preview_buffer.fill(Qt::transparent);
+
+    caretVisible = false;
+
+    pendingUpdate = true;
+}
+
+/************************
+ *		UTILITIES		*
+ ***********************/
 
 bool Painter::loadImage(const QString &path) {
     QImage img;
