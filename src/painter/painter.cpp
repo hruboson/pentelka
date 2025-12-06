@@ -350,7 +350,14 @@ bool Painter::loadImage(const QString &path) {
 }
 
 bool Painter::saveImage(const QString &path) {
-    return image_buffer.save(path);
+    QString local = QUrl(path).toLocalFile();
+    if (local.isEmpty())
+        local = path;
+
+    // determine extension automatically from file name - QImage::save handles it
+    bool ok = image_buffer.save(local);
+    if (!ok) qWarning() << "Failed to save image:" << local;
+    return ok;
 }
 
 void Painter::resizeBuffer(int width, int height) {

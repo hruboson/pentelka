@@ -9,7 +9,18 @@ ApplicationWindow {
 	width: 1200
 	height: 800
 	visible: true
-	title: "Pentelka"
+
+	property string currentSavePath: ""
+	property string pendingFolder: ""
+	title: {
+		if (currentSavePath === "") {
+            return "Pentelka - Untitled"
+        } else {
+            // extract only the file name
+            var parts = currentSavePath.split("/")
+            return "Pentelka - " + parts[parts.length - 1]
+		}
+	}
 
 	property color penColor: "#000000"
 
@@ -30,7 +41,8 @@ ApplicationWindow {
 			Action { 
 				text: qsTr("&New...") 
 				onTriggered: {
-					//TODO
+					//painter.loadImage("")   // add a function painter.clear()
+					//currentSavePath = ""
 				}
 			}
 			Action { 
@@ -38,11 +50,26 @@ ApplicationWindow {
 				onTriggered: openDialog.open()
 			}
 
-			Action { text: qsTr("&Save") }
-			Action { text: qsTr("Save &As...") }
-			MenuSeparator { }
-			Action { text: qsTr("&Quit") }
+			Action {
+				text: qsTr("&Save")
+				onTriggered: {
+					if (currentSavePath !== "") {
+						painter.saveImage(currentSavePath)
+					} else {
+						selectFolderDialog.open()
+					}
+				}
+			}
+
+			Action {
+				text: qsTr("Save &As...")
+				onTriggered: selectFolderDialog.open()
+			}
 		}
+
+		MenuSeparator { }
+		Action { text: qsTr("&Quit") }
+
 		Menu {
 			title: qsTr("&Edit")
 			Action { text: qsTr("&Cut") }
@@ -65,6 +92,60 @@ ApplicationWindow {
 				currentSavePath = selectedFile
 			} else {
 				console.log("Failed to load image:", selectedFile)
+			}
+		}
+	}
+
+	FolderDialog {
+		id: selectFolderDialog
+		title: "Select Destination Folder"
+		onAccepted: {
+			pendingFolder = selectedFolder
+			fileNameDialog.open()
+		}
+	}
+
+	Dialog {
+		id: fileNameDialog
+		title: "Enter file name"
+		modal: true
+		x: (root.width - implicitWidth) / 2
+		y: (root.height - implicitHeight) / 2
+
+		standardButtons: Dialog.Ok | Dialog.Cancel
+
+		property alias fileName: nameField.text
+
+		Column {
+			spacing: 10
+
+			TextField {
+				id: nameField
+				placeholderText: "image-name.png"
+				text: "untitled.png"
+				width: 250
+
+				Keys.onPressed: (event) => {
+					if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+						event.accepted = true
+						fileNameDialog.accept()
+					}
+				}
+			}
+		}
+
+		onAccepted: {
+			if (!fileName.includes(".")) {
+				nameField.text = fileName + ".png" // default extension
+			}
+
+			let fullPath = pendingFolder + "/" + nameField.text
+			console.log("Saving to:", fullPath)
+
+			if (painter.saveImage(fullPath)) {
+				currentSavePath = fullPath
+			} else {
+				console.log("Failed to save image")
 			}
 		}
 	}
