@@ -258,6 +258,10 @@ void Painter::sprayAt(const QPoint &pos, const QColor &color, int radius){
     pendingUpdate = true;
 }
 
+void Painter::floodFill(int x, int y, const QColor &color) {
+    // TODO: flood fill implementation
+}
+
 /************************
  *		TEXT TOOLS 		*
  ***********************/
@@ -383,10 +387,26 @@ void Painter::resizeBuffer(int width, int height) {
 
     pendingUpdate = true;
     emit bufferChanged();
-    emit imageSizeChanged(width, height);}
+    emit imageSizeChanged(width, height);
+}
 
-void Painter::floodFill(int x, int y, const QColor &color) {
-    // TODO: flood fill implementation
+void Painter::clearBuffer(int width = 800, int height = 600) {
+    image_buffer = QImage(width, height, QImage::Format_ARGB32_Premultiplied);
+    image_buffer.fill(Qt::white);
+
+    image_text_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+    image_text_buffer.fill(Qt::transparent);
+
+    preview_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+    preview_buffer.fill(Qt::transparent);
+
+    pendingUpdate = true;
+    emit bufferChanged();
+    emit imageSizeChanged(width, height);
+}
+
+void Painter::clearBuffer(){
+	clearBuffer(800, 600);
 }
 
 QImage Painter::getBuffer() const {

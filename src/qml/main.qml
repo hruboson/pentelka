@@ -38,13 +38,19 @@ ApplicationWindow {
 	menuBar: MenuBar {
 		Menu {
 			title: qsTr("&File")
+
 			Action { 
 				text: qsTr("&New...") 
 				onTriggered: {
-					//painter.loadImage("")   // add a function painter.clear()
-					//currentSavePath = ""
+					if (currentSavePath === "") {
+						painter.clearBuffer()
+					} else {
+						currentSavePath = ""
+						painter.clearBuffer()
+					}
 				}
 			}
+
 			Action { 
 				text: qsTr("&Open...") 
 				onTriggered: openDialog.open()
