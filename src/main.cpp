@@ -9,6 +9,10 @@
 #include "painter/painter.hpp"
 #include "painter/imageprovider.hpp"
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
     if (QString(context.category) == "qml") { // filter only messages created by app qml
         QTextStream(stdout) << msg << Qt::endl;
@@ -17,6 +21,13 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 
 int main(int argc, char *argv[])
 {
+
+	#ifdef Q_OS_WIN // windows debugging logs
+	AllocConsole();
+	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
+	#endif
+
     qInstallMessageHandler(messageHandler);
 
     QGuiApplication app(argc, argv);
