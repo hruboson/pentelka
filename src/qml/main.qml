@@ -14,6 +14,15 @@ ApplicationWindow {
 	property color penColor: "#000000"
 
 	property bool textMode: false
+	function exitTextMode(){
+		painter.commitText()
+		canvasContainer.currentText = "";
+		textMode = false;
+		console.log("Exiting text mode")
+
+		painter.selectBrush()
+		painter.setPreview(false)
+	}
 
 	menuBar: MenuBar {
 		Menu {
@@ -75,13 +84,28 @@ ApplicationWindow {
 					textMode = false;
 				}
 			}
+
+			// separator
+			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
+
 			Button {
 				text: "Text"
 				onClicked: {
 					painter.selectNewText()
+					painter.setPreview(true)
 					textMode = true
 					console.log("Entered text mode")
 				}
+			}
+
+			// Text size input
+			SpinBox {
+				id: textSizeInput
+				from: 1
+				to: 200
+				value: 15
+				width: 50
+				onValueChanged: painter.updateText(canvasContainer.currentText, canvasContainer.lastPoint, root.penColor, value)
 			}
 
 			// separator
@@ -116,6 +140,7 @@ ApplicationWindow {
 			anchors.centerIn: parent
 			spacing: 5
 
+			// Paint tool size input
 			Slider {
 				id: strokeSlider
 
@@ -175,19 +200,18 @@ ApplicationWindow {
 				property string currentText: ""
 
 				function handleKey(key, text) {
-					if (key === Qt.Key_Backspace) {
-						currentText = currentText.slice(0, -1)
-					} else if (key === Qt.Key_Escape) { // exit text mode
-						painter.commitText()
-						currentText = ""
-						textMode = false
-						console.log("Exiting text mode")
-					} else if (text.length > 0) {
-						currentText += text
-					}
+					if(textMode){
+						if (key === Qt.Key_Backspace) {
+							currentText = currentText.slice(0, -1)
+						} else if (key === Qt.Key_Escape) { // exit text mode
+							root.exitTextMode()
+						} else if (text.length > 0) {
+							currentText += text
+						}
 
-					painter.updateText(canvasContainer.currentText, canvasContainer.lastPoint, root.penColor, strokeSlider.value)
-					console.log("Text: ", currentText)
+						painter.updateText(canvasContainer.currentText, canvasContainer.lastPoint, root.penColor, textSizeInput.value)
+						console.log("Text: ", currentText)
+					}
 				}
 
 				Image {
@@ -199,22 +223,20 @@ ApplicationWindow {
 
 				MouseArea {
 					anchors.fill: parent
+					id: canvasMouseArea
+					cursorShape: textMode ? Qt.IBeamCursor : Qt.CrossCursor
 					onPressed: (mouse) => {
-						canvasContainer.forceActiveFocus()
+						canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
+						console.log("Mouse click at [" + mouse.x + "," + mouse.y + "]")
 						if (textMode) {
-							if (currentText !== "") {
-								// clicking while text exists commits the text
-								painter.commitText()
-								currentText = ""
-								textMode = false;
-								console.log("Exiting text mode")
+							canvasContainer.forceActiveFocus()
+							if (canvasContainer.currentText != "") {
+								root.exitTextMode()
 							}
 
-							//TODO FIX THIS
-							textInsertPos = Qt.point(mouse.x, mouse.y)
-							console.log("New position: ", textInsertPos)
+							// this line makes sure the caret is drawn even if text is empty
+							painter.updateText(canvasContainer.currentText, canvasContainer.lastPoint, root.penColor, textSizeInput.value)
 						} else {
-							canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
 							painter.draw(canvasContainer.lastPoint, canvasContainer.lastPoint, penColor, strokeSlider.value)
 						}
 					}

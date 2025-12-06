@@ -16,10 +16,13 @@ Painter::Painter(QObject *parent)
     
 	image_buffer = QImage(800, 600, QImage::Format_ARGB32_Premultiplied);
     image_buffer.fill(Qt::white);
+	image_text_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+	image_text_buffer.fill(Qt::transparent);
 
 	preview_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
 	preview_buffer.fill(Qt::transparent);
 
+	// canvas redraw timer
     updateTimer = new QTimer(this);
     updateTimer->setInterval(16); // ~60 FPS, put FPS in settings later
     connect(updateTimer, &QTimer::timeout, [this]() {
@@ -29,8 +32,16 @@ Painter::Painter(QObject *parent)
         }
     });
     updateTimer->start();
-}
 
+	// text caret timer -> currently doesn't work because updateText is only called on user keypress
+	/*caretTimer = new QTimer(this);
+    caretTimer->setInterval(500);
+    connect(caretTimer, &QTimer::timeout, [this]() {
+        caretVisible = !caretVisible;
+        pendingUpdate = true; // request a redraw
+    });
+    caretTimer->start();*/
+}
 
 void Painter::selectSpray(){
 	selectedTool = TOOLS::SPRAY;
@@ -221,7 +232,7 @@ void Painter::drawWuLine(const QPoint &from, const QPoint &to, const QColor &col
 
 void Painter::sprayAt(const QPoint &pos, const QColor &color, int radius){
     // radius determines spray area
-    int particles = radius * 20;   // spray density
+    int particles = radius * 10;   // spray density
 
     for (int i = 0; i < particles; ++i) {
 
@@ -252,36 +263,43 @@ void Painter::sprayAt(const QPoint &pos, const QColor &color, int radius){
 
 void Painter::updateText(const QString &text, const QPoint &pos, const QColor &color, int fontSize){
     // clear previous preview
+    image_text_buffer.fill(Qt::transparent);
     preview_buffer.fill(Qt::transparent);
 
-	//std::cout << "Painting at " << pos.x() << "|" << pos.y() << std::endl;
+	// draw text
+    if (!text.isEmpty()) {
+        QPainter pText(&image_text_buffer);
+        pText.setRenderHint(QPainter::Antialiasing);
+        pText.setRenderHint(QPainter::TextAntialiasing);
 
-    QPainter p(&preview_buffer);
-    p.setRenderHint(QPainter::Antialiasing);
-    p.setRenderHint(QPainter::TextAntialiasing);
+        QFont font;
+        font.setPointSize(fontSize);
+        pText.setFont(font);
+        pText.setPen(color);
+        pText.drawText(pos, text);
+    }
 
-    QFont font;
-    font.setPointSize(fontSize);
-    p.setFont(font);
+    // draw caret
+	//if (caretVisible) { // variable connected to the caret timer
+	QPainter p(&preview_buffer);
+	p.setRenderHint(QPainter::Antialiasing);
+	p.setRenderHint(QPainter::TextAntialiasing);
 
-    p.setPen(color);
-    p.drawText(pos, text);
+	QFont font;
+	font.setPointSize(fontSize);
+	p.setFont(font);
 
-	if (caretVisible) {
-		QPen caretPen(color);
-		caretPen.setWidth(2); // caret thickness
-		p.setPen(caretPen);
+	QFontMetrics fm(font);
+	int textWidth = fm.horizontalAdvance(text); // 0 if empty
+	int caretHeight = fm.height();
 
-		QFontMetrics fm(font);
-		int textWidth = fm.horizontalAdvance(text);  // width of current text
-		int caretHeight = fm.height();
+	QPen caretPen(Qt::black);
+	caretPen.setWidth(2);
+	p.setPen(caretPen);
 
-		// draw vertical line at end of text
-		p.drawLine(pos.x() + textWidth, pos.y() - fm.ascent(),
-				pos.x() + textWidth, pos.y() - fm.ascent() + caretHeight);
-	}
-
-    p.end();
+	p.drawLine(pos.x() + textWidth, pos.y() - fm.ascent(),
+			pos.x() + textWidth, pos.y() - fm.ascent() + caretHeight);
+	//}
 
     pendingUpdate = true;
 }
@@ -289,13 +307,11 @@ void Painter::updateText(const QString &text, const QPoint &pos, const QColor &c
 void Painter::commitText(){
 	QPainter p(&image_buffer);
     p.setCompositionMode(QPainter::CompositionMode_SourceOver);
-    p.drawImage(0, 0, preview_buffer);
+    p.drawImage(0, 0, image_text_buffer);
     p.end();
 
-    // reset preview state
-    preview_buffer.fill(Qt::transparent);
-
-    caretVisible = false;
+    // reset text buffer state
+    image_text_buffer.fill(Qt::transparent);
 
     pendingUpdate = true;
 }
@@ -339,7 +355,13 @@ QImage Painter::getBuffer() const {
 	QImage combined = image_buffer.copy();
 
 	QPainter p(&combined);
-	p.drawImage(0, 0, preview_buffer);
+
+	if(showPreview){
+		p.drawImage(0, 0, preview_buffer);
+	}
+
+	p.drawImage(0, 0, image_text_buffer);
+
 	p.end();
 
 	return combined;
@@ -347,4 +369,9 @@ QImage Painter::getBuffer() const {
 
 void Painter::flush() {
     pendingUpdate = true;  // force an update
+}
+
+
+void Painter::setPreview(bool show){
+	showPreview = show;
 }

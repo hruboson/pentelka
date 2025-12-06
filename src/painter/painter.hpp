@@ -40,14 +40,21 @@ public:
     // expose the image buffer to QML
     Q_INVOKABLE QImage getBuffer() const;
     Q_INVOKABLE void flush(); // emit bufferChanged once per frame
+	Q_INVOKABLE void setPreview(bool show);
 
 signals:
 	void bufferChanged();
 
 private:
 	QColor backgroundColor = Qt::white;
+
+	// FIX snake to camel case
     QImage image_buffer; // canvas content stored here
-	QImage preview_buffer;
+	QImage image_text_buffer;
+
+	QImage preview_buffer; // not included inthe complete image buffer
+	bool showPreview;
+
     QTimer *updateTimer;
     bool pendingUpdate = false;
 
@@ -55,11 +62,10 @@ private:
 	TOOLS selectedTool = TOOLS::BRUSH;
 
 	// text tools
-	// TODO create function that draws preview from everything, then the same 
-	// function will be used in commiting the text but this time without all the preview stuff
-	bool caretVisible = true;
 	QString currentText;
 	QPoint textPos;
 	int textFontSize;
 	QColor textColor;
+    bool caretVisible = true;
+    QTimer *caretTimer;
 };
