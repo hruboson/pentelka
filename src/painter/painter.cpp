@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QTimer>
 #include <QDebug>
+#include <QUrl>
 
 static inline int ipart(float x) { return static_cast<int>(std::floor(x)); }
 static inline float fpart(float x) { return x - std::floor(x); }
@@ -321,11 +322,30 @@ void Painter::commitText(){
  ***********************/
 
 bool Painter::loadImage(const QString &path) {
-    QImage img;
-    if (!img.load(path))
-        return false;
+	QString local = QUrl(path).toLocalFile();
+    if (local.isEmpty())
+        local = path;
 
+    QImage img;
+    if (!img.load(local)) {
+        qWarning() << "Failed to load image:" << path;
+        return false;
+    }
+
+	//TODO create a single resize function
+    // resize internal buffer to match loaded image
     image_buffer = img.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+
+    // resize text and preview buffers to match new size
+    image_text_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+    image_text_buffer.fill(Qt::transparent);
+
+    preview_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+    preview_buffer.fill(Qt::transparent);
+
+    pendingUpdate = true;
+    emit bufferChanged();
+    emit imageSizeChanged(image_buffer.width(), image_buffer.height());
     return true;
 }
 
@@ -337,6 +357,7 @@ void Painter::resizeBuffer(int width, int height) {
     if (width <= 0 || height <= 0)
         return;
 
+    // create new buffer and paint old content into it
     QImage newBuffer(width, height, QImage::Format_ARGB32_Premultiplied);
     newBuffer.fill(backgroundColor);
 
@@ -345,7 +366,17 @@ void Painter::resizeBuffer(int width, int height) {
     p.end();
 
     image_buffer = newBuffer;
-}
+
+    // update text and preview buffers to match new size
+    image_text_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+    image_text_buffer.fill(Qt::transparent);
+
+    preview_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+    preview_buffer.fill(Qt::transparent);
+
+    pendingUpdate = true;
+    emit bufferChanged();
+    emit imageSizeChanged(width, height);}
 
 void Painter::floodFill(int x, int y, const QColor &color) {
     // TODO: flood fill implementation

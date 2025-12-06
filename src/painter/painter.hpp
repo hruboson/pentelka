@@ -44,6 +44,7 @@ public:
 
 signals:
 	void bufferChanged();
+	void imageSizeChanged(int width, int height);
 
 private:
 	QColor backgroundColor = Qt::white;

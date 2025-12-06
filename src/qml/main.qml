@@ -27,8 +27,17 @@ ApplicationWindow {
 	menuBar: MenuBar {
 		Menu {
 			title: qsTr("&File")
-			Action { text: qsTr("&New...") }
-			Action { text: qsTr("&Open...") }
+			Action { 
+				text: qsTr("&New...") 
+				onTriggered: {
+					//TODO
+				}
+			}
+			Action { 
+				text: qsTr("&Open...") 
+				onTriggered: openDialog.open()
+			}
+
 			Action { text: qsTr("&Save") }
 			Action { text: qsTr("Save &As...") }
 			MenuSeparator { }
@@ -43,6 +52,20 @@ ApplicationWindow {
 		Menu {
 			title: qsTr("&Help")
 			Action { text: qsTr("&About") }
+		}
+	}
+
+	FileDialog {
+		id: openDialog
+		title: "Open Image"
+		currentFolder: shortcuts.home
+		nameFilters: ["Images (*.png *.jpg *.bmp)"]
+		onAccepted: {
+			if (painter.loadImage(selectedFile)) {
+				currentSavePath = selectedFile
+			} else {
+				console.log("Failed to load image:", selectedFile)
+			}
 		}
 	}
 
@@ -218,7 +241,6 @@ ApplicationWindow {
 					id: paintImage
 					anchors.fill: parent
 					source: "image://painter/current"
-					// fillMode: Image.PreserveAspectFit  // prevent stretching
 				}
 
 				MouseArea {
@@ -252,31 +274,26 @@ ApplicationWindow {
 		}	
 	}
 
+	/*************************
+	 * 		CONNECTIONS		 *
+	 ************************/
+
 	Connections {
 		target: painter
 		function onBufferChanged() {
 			paintImage.source = "image://painter/current?" + Math.random()
 		}
+		function onImageSizeChanged(w, h) {
+			console.log("Painter image size changed to", w, h)
+			canvasContainer.width = w
+			canvasContainer.height = h
+
+			// center in parent
+			canvasContainer.anchors.horizontalCenter = parent.horizontalCenter
+			canvasContainer.anchors.verticalCenter = parent.verticalCenter
+
+			// ensure the Image isn't independently scaling
+			paintImage.fillMode = Image.PreserveAspectFit
+		}
 	}
-
-	// File dialogs
-	/*FileDialog {
-		 id: openDialog
-		 title: "Open Image"
-		 currentFolder: shortcuts.home
-		 nameFilters: ["*.png", "*.jpg", "*.bmp"]
-		 onAccepted: {
-			 canvas.openImage(selectedFile)
-		 }
-	 }
-
-	 FileDialog {
-		 id: saveDialog
-		 title: "Save Image"
-		 currentFolder: shortcuts.home
-		 nameFilters: ["*.png", "*.jpg", "*.bmp"]
-		 onAccepted: {
-			 canvas.saveImage(selectedFile)
-		 }
-	 }*/
  }
