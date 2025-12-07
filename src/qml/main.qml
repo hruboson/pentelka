@@ -10,6 +10,8 @@ ApplicationWindow {
 	height: 800
 	visible: true
 
+	signal requestQuit()
+
 	property string currentSavePath: ""
 	property string pendingFolder: ""
 	title: {
@@ -71,10 +73,14 @@ ApplicationWindow {
 				text: qsTr("Save &As...")
 				onTriggered: selectFolderDialog.open()
 			}
-		}
 
-		MenuSeparator { }
-		Action { text: qsTr("&Quit") }
+			MenuSeparator { }
+
+			Action { 
+				text: qsTr("&Quit") 
+				onTriggered: root.requestQuit()
+			}
+		}
 
 		Menu {
 			title: qsTr("&Edit")
@@ -383,4 +389,11 @@ ApplicationWindow {
 			paintImage.fillMode = Image.PreserveAspectFit
 		}
 	}
- }
+
+	Connections {
+		target: root
+		function onRequestQuit() {
+			Qt.quit();
+		}
+	}
+}
