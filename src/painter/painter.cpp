@@ -7,6 +7,9 @@
 #include <QTimer>
 #include <QDebug>
 #include <QUrl>
+#include <QPrinter>
+#include <QPrintDialog>
+#include <QTextDocument>
 
 static inline int ipart(float x) { return static_cast<int>(std::floor(x)); }
 static inline float fpart(float x) { return x - std::floor(x); }
@@ -445,9 +448,24 @@ bool Painter::saveImage(const QString &path) {
     return ok;
 }
 
+void Painter::requestPrint() {
+    QPrinter printer(QPrinter::HighResolution);
+	printer.setPrinterName("Generic printer");
+
+	QPrintDialog dialog(&printer, nullptr);
+    if (dialog.exec() == QDialog::Accepted) {
+        QTextDocument document;
+        document.setHtml("<h1>Hello, Printer!</h1><p>This is a test of a rich text document being printed.</p>");
+
+        // The QPainter will render the document onto the printer
+        QPainter painter(&printer);
+        document.drawContents(&painter);
+    }
+}
+
 void Painter::resizeBuffer(int width, int height) {
-    if (width <= 0 || height <= 0)
-        return;
+	if (width <= 0 || height <= 0)
+		return;
 
     // create new buffer and paint old content into it
     QImage newBuffer(width, height, QImage::Format_ARGB32_Premultiplied);

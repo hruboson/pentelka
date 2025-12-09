@@ -2,7 +2,7 @@ TARGET = Pentelka
 QMAKE_PROJECT_NAME = $${TARGET}
 TEMPLATE = app
 
-QT += quick core
+QT += quick core printsupport
 
 CONFIG += c++17
 CONFIG += lrelease warn_on

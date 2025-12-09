@@ -76,6 +76,11 @@ ApplicationWindow {
 				onTriggered: selectFolderDialog.open()
 			}
 
+			Action {
+				text: qsTr("Print")
+				onTriggered: painter.requestPrint()
+			}
+
 			MenuSeparator { }
 
 			Action { 

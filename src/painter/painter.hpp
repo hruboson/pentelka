@@ -36,6 +36,7 @@ public:
 	// utilities
     Q_INVOKABLE bool loadImage(const QString &path);
     Q_INVOKABLE bool saveImage(const QString &path);
+	Q_INVOKABLE void requestPrint();
     Q_INVOKABLE void resizeBuffer(int width, int height);
 
     // expose the image buffer to QML
