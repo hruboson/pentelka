@@ -379,7 +379,7 @@ void Painter::updateText(const QString &text, const QPoint &pos, const QColor &c
 	int textWidth = fm.horizontalAdvance(text); // 0 if empty
 	int caretHeight = fm.height();
 
-	QPen caretPen(Qt::black);
+	QPen caretPen(color);
 	caretPen.setWidth(2);
 	p.setPen(caretPen);
 
