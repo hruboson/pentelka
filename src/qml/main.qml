@@ -200,6 +200,13 @@ ApplicationWindow {
 					textMode = false;
 				}
 			}
+			Button {
+				text: "Fill"
+				onClicked: {
+					painter.selectFill();
+					textMode = false;
+				}
+			}
 
 			// separator
 			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }

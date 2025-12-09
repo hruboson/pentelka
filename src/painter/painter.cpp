@@ -56,6 +56,10 @@ void Painter::selectEraser(){
 	selectedTool = TOOLS::ERASER;
 }
 
+void Painter::selectFill(){
+	selectedTool = TOOLS::FILL;
+}
+
 void Painter::selectNewText(){
 	selectedTool = TOOLS::TEXT;
 }
@@ -70,6 +74,9 @@ void Painter::draw(const QPoint &from, const QPoint &to, const QColor &color, in
 			break;
 		case TOOLS::ERASER:
 			drawLine(from, to, backgroundColor, width);
+			break;
+		case TOOLS::FILL:
+			fillArea(to, color);
 			break;
 		case TOOLS::TEXT:
 			break;
@@ -258,8 +265,82 @@ void Painter::sprayAt(const QPoint &pos, const QColor &color, int radius){
     pendingUpdate = true;
 }
 
-void Painter::floodFill(int x, int y, const QColor &color) {
-    // TODO: flood fill implementation
+void Painter::fillArea(const QPoint &at, const QColor &color) {
+	if (!image_buffer.rect().contains(at))
+		return;
+
+	const QRgb oldColor = image_buffer.pixel(at);
+	const QRgb newColor = color.rgba();
+	if (oldColor == newColor)
+		return;
+
+	const int w = image_buffer.width();
+	const int h = image_buffer.height();
+
+	std::vector<QPoint> stack;
+	stack.reserve(8192);
+	stack.push_back(at);
+
+	while (!stack.empty()) {
+		QPoint p = stack.back();
+		stack.pop_back();
+
+		int x = p.x();
+		int y = p.y();
+
+		// skip if out-of-bounds or not oldColor
+		if (y < 0 || y >= h) continue;
+		if (x < 0 || x >= w) continue;
+		if (image_buffer.pixelColor(x, y) != oldColor) continue;
+
+		// left boundary
+		int lx = x;
+		while (lx - 1 >= 0 && image_buffer.pixelColor(lx - 1, y) == oldColor)
+			lx--;
+
+		// right boundary
+		int rx = x;
+		while (rx + 1 < w && image_buffer.pixelColor(rx + 1, y) == oldColor)
+			rx++;
+
+		// fill span [lx, rx]
+		for (int px = lx; px <= rx; px++)
+			image_buffer.setPixelColor(px, y, color);
+
+		if (y > 0) {
+			int px = lx;
+			while (px <= rx) {
+				// skip non-target
+				while (px <= rx && image_buffer.pixelColor(px, y - 1) != oldColor)
+					px++;
+				if (px > rx) break;
+
+				int start = px;
+				while (px <= rx && image_buffer.pixelColor(px, y - 1) == oldColor)
+					px++;
+
+				// push a single representative point for this run
+				stack.emplace_back((start + px - 1) / 2, y - 1);
+			}
+		}
+
+		if (y < h - 1) {
+			int px = lx;
+			while (px <= rx) {
+				while (px <= rx && image_buffer.pixelColor(px, y + 1) != oldColor)
+					px++;
+				if (px > rx) break;
+
+				int start = px;
+				while (px <= rx && image_buffer.pixelColor(px, y + 1) == oldColor)
+					px++;
+
+				stack.emplace_back((start + px - 1) / 2, y + 1);
+			}
+		}
+	}
+
+	pendingUpdate = true;
 }
 
 /************************
