@@ -11,6 +11,7 @@ ApplicationWindow {
 	visible: true
 
 	signal requestQuit()
+	property int currentToolCursor: Qt.CrossCursor
 
 	property string currentSavePath: ""
 	property string pendingFolder: ""
@@ -34,6 +35,7 @@ ApplicationWindow {
 		console.log("Exiting text mode")
 
 		painter.selectBrush()
+		root.currentToolCursor = Qt.CrossCursor
 		painter.setPreview(false)
 	}
 
@@ -184,6 +186,7 @@ ApplicationWindow {
 				onClicked: {
 					painter.selectBrush()
 					textMode = false;
+					root.currentToolCursor = Qt.CrossCursor
 				}
 			}
 			Button {
@@ -198,6 +201,7 @@ ApplicationWindow {
 				onClicked: {
 					painter.selectEraser();
 					textMode = false;
+					root.currentToolCursor = Qt.UpArrowCursor
 				}
 			}
 			Button {
@@ -205,6 +209,7 @@ ApplicationWindow {
 				onClicked: {
 					painter.selectFill();
 					textMode = false;
+					root.currentToolCursor = Qt.PointingHandCursor
 				}
 			}
 
@@ -217,6 +222,7 @@ ApplicationWindow {
 					painter.selectNewText()
 					painter.setPreview(true)
 					textMode = true
+					root.currentToolCursor = Qt.IBeamCursor
 					console.log("Entered text mode")
 				}
 			}
@@ -234,10 +240,43 @@ ApplicationWindow {
 			// separator
 			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
 
-			// color picker button
-			Button {
-				text: "Color"
-				onClicked: colorDialog.open()
+			// current color info
+			Column {
+				spacing: 3
+				anchors.left: parent.left
+				anchors.right: parent.right
+
+				Rectangle {
+					width: parent.width - 10
+					height: 25
+					radius: 4
+					color: penColor
+					border.width: 1
+					border.color: "#555555"
+
+					MouseArea {
+						anchors.fill: parent
+						onClicked: colorDialog.open()
+						cursorShape: Qt.PointingHandCursor
+					}
+				}
+
+				Text {
+					text: "RGB: " +
+					Math.round(penColor.r * 255) + ", " +
+					Math.round(penColor.g * 255) + ", " +
+					Math.round(penColor.b * 255)
+					font.pixelSize: 11
+					horizontalAlignment: Text.AlignHCenter
+					width: parent.width
+				}
+
+				Text {
+					text: "HEX: " + penColor
+					font.pixelSize: 11
+					horizontalAlignment: Text.AlignHCenter
+					width: parent.width
+				}
 			}
 		}
 	}
@@ -346,7 +385,7 @@ ApplicationWindow {
 				MouseArea {
 					anchors.fill: parent
 					id: canvasMouseArea
-					cursorShape: textMode ? Qt.IBeamCursor : Qt.CrossCursor
+					cursorShape: root.currentToolCursor
 					onPressed: (mouse) => {
 						canvasContainer.lastPoint = Qt.point(mouse.x, mouse.y)
 						console.log("Mouse click at [" + mouse.x + "," + mouse.y + "]")
