@@ -1,7 +1,9 @@
+#include <QApplication>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QtLogging>
 #include <QQmlContext>
+#include <QWidget>
 
 #include <QLocale>
 #include <QTranslator>
@@ -30,10 +32,13 @@ int main(int argc, char *argv[])
 
     qInstallMessageHandler(messageHandler);
 
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
 	QQmlApplicationEngine engine;
 
-	Painter painter;
+	QWidget* dialogParent = new QWidget();
+	dialogParent->setAttribute(Qt::WA_DontShowOnScreen, true);
+
+	Painter painter(dialogParent);
     engine.rootContext()->setContextProperty("painter", &painter); // expose painter to qml
 	engine.addImageProvider("painter", new PainterImageProvider(&painter));
 

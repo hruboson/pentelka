@@ -10,7 +10,7 @@ class Painter : public QObject
 {
     Q_OBJECT
 public:
-    explicit Painter(QObject *parent = nullptr);
+	explicit Painter(QWidget* parentWidget, QObject* parent = nullptr);
 
 	// main drawing function
 	Q_INVOKABLE void draw(const QPoint &from, const QPoint &to, const QColor &color, int width); // continuous function
@@ -51,6 +51,8 @@ signals:
 	void imageSizeChanged(int width, int height);
 
 private:
+    QWidget* parentWidget;
+
 	QColor backgroundColor = Qt::white;
 
 	// FIX snake to camel case

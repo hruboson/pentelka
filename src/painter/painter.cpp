@@ -15,8 +15,9 @@ static inline int ipart(float x) { return static_cast<int>(std::floor(x)); }
 static inline float fpart(float x) { return x - std::floor(x); }
 static inline float rfpart(float x) { return 1 - fpart(x); }
 
-Painter::Painter(QObject *parent)
-    : QObject(parent) {
+Painter::Painter(QWidget* parentWidget, QObject *parent)
+    : QObject(parent),
+      parentWidget(parentWidget) {
     
 	image_buffer = QImage(800, 600, QImage::Format_ARGB32_Premultiplied);
     image_buffer.fill(Qt::white);
@@ -449,10 +450,15 @@ bool Painter::saveImage(const QString &path) {
 }
 
 void Painter::requestPrint() {
-    QPrinter printer(QPrinter::HighResolution);
+    QPrinter printer;
 	printer.setPrinterName("Generic printer");
 
-	QPrintDialog dialog(&printer, nullptr);
+	QPrintDialog dialog(&printer, parentWidget);
+	dialog.setWindowTitle(tr("Print Document"));
+	if (dialog.exec() != QDialog::Accepted)
+		return;
+
+	/*QPrintDialog dialog(&printer, nullptr);
     if (dialog.exec() == QDialog::Accepted) {
         QTextDocument document;
         document.setHtml("<h1>Hello, Printer!</h1><p>This is a test of a rich text document being printed.</p>");
@@ -460,7 +466,7 @@ void Painter::requestPrint() {
         // The QPainter will render the document onto the printer
         QPainter painter(&printer);
         document.drawContents(&painter);
-    }
+    }*/
 }
 
 void Painter::resizeBuffer(int width, int height) {
