@@ -101,7 +101,10 @@ ApplicationWindow {
 		}
 		Menu {
 			title: qsTr("&Help")
-			Action { text: qsTr("&About") }
+			Action { 
+				text: qsTr("&About") 
+				onTriggered: aboutDialog.open()
+			}
 		}
 	}
 
@@ -473,6 +476,54 @@ ApplicationWindow {
 				}
 			}
 		}	
+	}
+
+	Dialog {
+		id: aboutDialog
+		title: "About Pentelka"
+		modal: true
+		x: (root.width - implicitWidth) / 2
+		y: (root.height - implicitHeight) / 2
+		standardButtons: Dialog.Ok
+
+		background: Rectangle { // fixes KDE theme schenanigans
+			color: "#FFFFFF"
+			radius: 6
+			border.color: "#888888"
+			border.width: 1
+		}
+
+		contentItem: Column {
+			spacing: 15
+			padding: 20
+			width: 300
+
+			Image {
+				id: appIcon
+				source: "qrc:/assets/icon/pentelka_icon.png"
+				width: 64
+				height: 64
+				anchors.horizontalCenter: parent.horizontalCenter
+			}
+
+			Text {
+				text: "Pentelka\nA simple drawing application."
+				font.pixelSize: 14
+	            color: "#000000"
+				horizontalAlignment: Text.AlignHCenter
+				wrapMode: Text.Wrap
+				anchors.horizontalCenter: parent.horizontalCenter
+			}
+
+			Text {
+				//TODO clickable link
+				text: "https://github.com/hruboson/pentelka"
+            	color: "#ffca24"
+				horizontalAlignment: Text.AlignHCenter
+				wrapMode: Text.Wrap
+				anchors.horizontalCenter: parent.horizontalCenter
+			}
+		}
 	}
 
 	/*************************

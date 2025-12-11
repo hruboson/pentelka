@@ -34,6 +34,13 @@ qt_add_executable(${APP_NAME}
 # Translations
 qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 
+# Resources
+qt_add_resources(${APP_NAME} "app_resources"
+    PREFIX "/"
+    FILES
+        ../assets/icon/pentelka_icon.png
+)
+
 # Link Qt6
 target_link_libraries(${APP_NAME}
     PRIVATE Qt6::Core Qt6::Quick Qt6::PrintSupport
@@ -41,7 +48,7 @@ target_link_libraries(${APP_NAME}
 
 # Target properties (macOS & Windows)
 set_target_properties(${APP_NAME} PROPERTIES
-    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_GUI_IDENTIFIER penetelka.hrubos.dev
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
