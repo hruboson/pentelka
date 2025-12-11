@@ -77,7 +77,7 @@ ApplicationWindow {
 			}
 
 			Action {
-				text: qsTr("Print")
+				text: qsTr("&Print")
 				onTriggered: painter.requestPrint()
 			}
 
@@ -91,9 +91,13 @@ ApplicationWindow {
 
 		Menu {
 			title: qsTr("&Edit")
-			Action { text: qsTr("&Cut") }
+			/*Action { text: qsTr("&Cut") }
 			Action { text: qsTr("&Copy") }
-			Action { text: qsTr("&Paste") }
+			Action { text: qsTr("&Paste") }*/
+			Action { 
+				text: qsTr("Resize &Canvas")
+				onTriggered: resizeCanvasDialog.open()
+			}
 		}
 		Menu {
 			title: qsTr("&Help")
@@ -166,6 +170,59 @@ ApplicationWindow {
 			} else {
 				console.log("Failed to save image")
 			}
+		}
+	}
+
+	Dialog {
+		id: resizeCanvasDialog
+		title: "Resize canvas"
+		modal: true
+		x: (root.width - implicitWidth) / 2
+		y: (root.height - implicitHeight) / 2
+
+		standardButtons: Dialog.Ok | Dialog.Cancel
+		property int newWidth: canvasContainer.width
+		property int newHeight: canvasContainer.height
+
+		onOpened: {
+			// load current canvas size
+			newWidth = canvasContainer.width
+			newHeight = canvasContainer.height
+		}
+
+		Column {
+			anchors.margins: 20
+			anchors.fill: parent
+			spacing: 12
+
+			Row {
+				spacing: 10
+				Label { text: "Width:" }
+				SpinBox {
+					id: widthField
+					from: 1
+					to: 10000
+					value: resizeCanvasDialog.newWidth
+					onValueChanged: resizeCanvasDialog.newWidth = value
+				}
+			}
+
+			Row {
+				spacing: 10
+				Label { text: "Height:" }
+				SpinBox {
+					id: heightField
+					from: 1
+					to: 10000
+					value: resizeCanvasDialog.newHeight
+					onValueChanged: resizeCanvasDialog.newHeight = value
+				}
+			}
+		}
+
+		onAccepted: {
+			console.log("Resizing canvas to", newWidth, "x", newHeight)
+			painter.resizeCanvas(newWidth, newHeight)
 		}
 	}
 

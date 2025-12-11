@@ -476,6 +476,54 @@ void Painter::requestPrint() {
     painter.drawImage(targetRect, finalImage);
 }
 
+void Painter::resizeCanvas(int width, int height){
+	//TODO most of these sections should be their own functions because they might be used later
+	// e.g. create new buffers and replace existing, resize all buffers, ...
+	
+	if (width <= 0 || height <= 0)
+		return;
+
+	const int oldW = image_buffer.width();
+	const int oldH = image_buffer.height();
+
+	const int newW = width;
+	const int newH = height;
+
+	// create new centered buffers
+	QImage newMain(newW, newH, QImage::Format_ARGB32_Premultiplied);
+	QImage newText(newW, newH, QImage::Format_ARGB32_Premultiplied);
+	QImage newPrev(newW, newH, QImage::Format_ARGB32_Premultiplied);
+
+	newMain.fill(backgroundColor);
+	newText.fill(Qt::transparent);
+	newPrev.fill(Qt::transparent);
+
+	// compute top left where old image should be drawn in the new one
+	int offsetX = (newW - oldW) / 2;
+	int offsetY = (newH - oldH) / 2;
+
+	QPainter p1(&newMain);
+	p1.drawImage(offsetX, offsetY, image_buffer);
+	p1.end();
+
+	QPainter p2(&newText);
+	p2.drawImage(offsetX, offsetY, image_text_buffer);
+	p2.end();
+
+	QPainter p3(&newPrev);
+	p3.drawImage(offsetX, offsetY, preview_buffer);
+	p3.end();
+
+	// replace buffers
+	image_buffer = std::move(newMain);
+	image_text_buffer = std::move(newText);
+	preview_buffer = std::move(newPrev);
+
+	pendingUpdate = true;
+	emit bufferChanged();
+	emit imageSizeChanged(newW, newH);
+}
+
 void Painter::resizeBuffer(int width, int height) {
 	if (width <= 0 || height <= 0)
 		return;
