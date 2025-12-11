@@ -9,7 +9,6 @@
 #include <QUrl>
 #include <QPrinter>
 #include <QPrintDialog>
-#include <QTextDocument>
 
 static inline int ipart(float x) { return static_cast<int>(std::floor(x)); }
 static inline float fpart(float x) { return x - std::floor(x); }
@@ -458,15 +457,23 @@ void Painter::requestPrint() {
 	if (dialog.exec() != QDialog::Accepted)
 		return;
 
-	/*QPrintDialog dialog(&printer, nullptr);
-    if (dialog.exec() == QDialog::Accepted) {
-        QTextDocument document;
-        document.setHtml("<h1>Hello, Printer!</h1><p>This is a test of a rich text document being printed.</p>");
+    QPainter painter(&printer);
+    if (!painter.isActive())
+        return;
 
-        // The QPainter will render the document onto the printer
-        QPainter painter(&printer);
-        document.drawContents(&painter);
-    }*/
+    QImage finalImage = getBuffer();
+    QRectF pageRect = printer.pageRect(QPrinter::DevicePixel);
+
+    QSizeF imageSize = finalImage.size();
+    imageSize.scale(pageRect.size(), Qt::KeepAspectRatio);
+
+    int x = pageRect.x() + (pageRect.width()  - imageSize.width())  / 2;
+    int y = pageRect.y() + (pageRect.height() - imageSize.height()) / 2;
+
+    QRect targetRect(x, y, imageSize.width(), imageSize.height());
+
+    // draw the buffer onto the printer
+    painter.drawImage(targetRect, finalImage);
 }
 
 void Painter::resizeBuffer(int width, int height) {
