@@ -95,11 +95,20 @@ ApplicationWindow {
 			/*Action { text: qsTr("&Cut") }
 			Action { text: qsTr("&Copy") }
 			Action { text: qsTr("&Paste") }*/
+			/*Action {
+				text: qsTr("Options")
+				onTriggered: {
+					var component = Qt.createComponent("options.qml")
+					var window = component.createObject(root)
+					window.show()
+				}
+			}*/
 			Action { 
 				text: qsTr("Resize &Canvas")
 				onTriggered: resizeCanvasDialog.open()
 			}
 		}
+
 		Menu {
 			title: qsTr("&Help")
 			Action { 
