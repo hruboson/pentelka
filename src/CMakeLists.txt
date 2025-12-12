@@ -5,6 +5,10 @@ set(APP_NAME Pentelka)
 
 project(${APP_NAME} VERSION 0.1 LANGUAGES CXX)
 
+if (WIN32) # set app icon on windows
+    set(WIN_RESOURCES app.rc)
+endif()
+
 # Variables
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -29,6 +33,7 @@ set(PROJECT_SOURCES
 qt_add_executable(${APP_NAME}
     MANUAL_FINALIZATION
     ${PROJECT_SOURCES}
+	${WIN_RESOURCES}
 )
 
 # Translations
