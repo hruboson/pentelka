@@ -3,6 +3,7 @@ import QtQuick.Window
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Controls
+import QtQuick.Layouts
 
 ApplicationWindow {
 	id: root
@@ -180,54 +181,74 @@ ApplicationWindow {
 		id: resizeCanvasDialog
 		title: "Resize canvas"
 		modal: true
-		x: (root.width - implicitWidth) / 2
+		standardButtons: Dialog.NoButton
+		x: (root.width - implicitWidth) / 2 
 		y: (root.height - implicitHeight) / 2
 
-		standardButtons: Dialog.Ok | Dialog.Cancel
 		property int newWidth: canvasContainer.width
 		property int newHeight: canvasContainer.height
 
+		width: implicitWidth
+		height: implicitHeight
+
 		onOpened: {
-			// load current canvas size
 			newWidth = canvasContainer.width
 			newHeight = canvasContainer.height
 		}
 
-		Column {
-			anchors.margins: 20
-			anchors.fill: parent
-			spacing: 12
+		contentItem: ColumnLayout {
+        spacing: 16
+        Layout.margins: 20  // padding around all content
 
-			Row {
-				spacing: 10
-				Label { text: "Width:" }
-				SpinBox {
-					id: widthField
-					from: 1
-					to: 10000
-					value: resizeCanvasDialog.newWidth
-					onValueChanged: resizeCanvasDialog.newWidth = value
-				}
-			}
+        RowLayout {
+            spacing: 10
+            Layout.fillWidth: true
 
-			Row {
-				spacing: 10
-				Label { text: "Height:" }
-				SpinBox {
-					id: heightField
-					from: 1
-					to: 10000
-					value: resizeCanvasDialog.newHeight
-					onValueChanged: resizeCanvasDialog.newHeight = value
-				}
-			}
-		}
+            Label { text: "Width:" }
+            SpinBox {
+                id: widthField
+                from: 1
+                to: 10000
+                value: newWidth
+                Layout.fillWidth: true
+                onValueChanged: newWidth = value
+            }
+        }
 
-		onAccepted: {
-			console.log("Resizing canvas to", newWidth, "x", newHeight)
-			painter.resizeCanvas(newWidth, newHeight)
-		}
-	}
+        RowLayout {
+            spacing: 10
+            Layout.fillWidth: true
+
+            Label { text: "Height:" }
+            SpinBox {
+                id: heightField
+                from: 1
+                to: 10000
+                value: newHeight
+                Layout.fillWidth: true
+                onValueChanged: newHeight = value
+            }
+        }
+
+        RowLayout {
+            spacing: 10
+            Layout.alignment: Qt.AlignHCenter
+
+            Button {
+                text: "OK"
+                onClicked: {
+                    painter.resizeCanvas(newWidth, newHeight)
+                    resizeCanvasDialog.accept()
+                }
+            }
+
+            Button {
+                text: "Cancel"
+                onClicked: resizeCanvasDialog.reject()
+            }
+        }
+    }
+}
 
 	// left vertical bar with tools
 	Rectangle {
