@@ -52,10 +52,11 @@ public:
 
     // expose the image buffer to QML
     Q_INVOKABLE QImage getBuffer() const;
-	Q_INVOKABLE void clearBuffer(int width, int height);
-	Q_INVOKABLE void clearBuffer(); // QML doesn't seem to be able to take function with optional parameters hence the overload
+	Q_INVOKABLE void setPreview(bool show);
+
+	void clearBuffer(int width, int height);
+	void clearBuffer(); // QML doesn't seem to be able to take function with optional parameters hence the overload
     void flush(); // emit bufferChanged once per frame
-	void setPreview(bool show);
 
 signals:
 	void bufferChanged();
