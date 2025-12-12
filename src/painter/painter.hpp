@@ -2,6 +2,8 @@
 
 #include "tools.hpp"
 
+#include <utility>
+
 #include <QObject>
 #include <QImage>
 #include <QColor>
@@ -17,17 +19,28 @@ public:
 
 	// tool selectors (should be called in qml)
 	Q_INVOKABLE void selectBrush();
+	Q_INVOKABLE void selectBrushPatternCROSS();
+	Q_INVOKABLE void selectBrushPatternDIAGCROSS();
+	Q_INVOKABLE void selectBrushPatternDENSE();
+
 	Q_INVOKABLE void selectSpray();
 	Q_INVOKABLE void selectEraser();
+
 	Q_INVOKABLE void selectFill();
+	Q_INVOKABLE void selectFillPatternCROSS();
+	Q_INVOKABLE void selectFillPatternDIAGCROSS();
+	Q_INVOKABLE void selectFillPatternDENSE();
+
 	Q_INVOKABLE void selectNewText();
 	
 	// drawing tools
-	Q_INVOKABLE void setPixel(int x, int y, const QColor &color, int width);
-	Q_INVOKABLE void drawLine(const QPoint &from, const QPoint &to, const QColor &color, int width);
-	Q_INVOKABLE void drawWuLine(const QPoint &from, const QPoint &to, const QColor &color, int width); // better line algorithm
-	Q_INVOKABLE void sprayAt(const QPoint &at, const QColor &color, int width);
-	Q_INVOKABLE void fillArea(const QPoint &at, const QColor &color);
+	void setPixel(int x, int y, const QColor &color, int width);
+	void setPixelPatterned(int x, int y, const QColor &color, int width, const BrushPattern* pattern);
+	void drawLine(const QPoint &from, const QPoint &to, const QColor &color, int width, const BrushPattern* pattern = nullptr);
+	void drawWuLine(const QPoint &from, const QPoint &to, const QColor &color, int width); // better line algorithm
+	void sprayAt(const QPoint &at, const QColor &color, int width);
+	void fillArea(const QPoint &at, const QColor &color);
+	void fillAreaWithPattern(const QPoint &at, const QColor &color, FILLPATTERNS pattern);
 
 	// text tools
 	Q_INVOKABLE void updateText(const QString &text, const QPoint &pos, const QColor &color, int fontSize);
@@ -68,6 +81,10 @@ private:
 
 	// Tool to paint with
 	TOOLS selectedTool = TOOLS::BRUSH;
+	BRUSHPATTERNS selectedBrushPattern = BRUSHPATTERNS::DIAGCROSS;
+	std::pair<int, int> selectedBrushPatternOffset = {0, 0};
+
+	FILLPATTERNS selectedFillPattern = FILLPATTERNS::NONE;
 
 	// text tools
 	QString currentText;
