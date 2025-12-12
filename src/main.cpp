@@ -24,10 +24,12 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 int main(int argc, char *argv[])
 {
 
+	#if QT_DEBUG
 	#ifdef Q_OS_WIN // windows debugging logs
 	AllocConsole();
 	freopen("CONOUT$", "w", stdout);
 	freopen("CONOUT$", "w", stderr);
+	#endif
 	#endif
 
     qInstallMessageHandler(messageHandler);
