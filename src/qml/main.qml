@@ -181,75 +181,62 @@ ApplicationWindow {
 		id: resizeCanvasDialog
 		title: "Resize canvas"
 		modal: true
-		standardButtons: Dialog.NoButton
-		x: (root.width - implicitWidth) / 2 
+		x: (root.width - implicitWidth) / 2
 		y: (root.height - implicitHeight) / 2
 
+		standardButtons: Dialog.Ok | Dialog.Cancel
 		property int newWidth: canvasContainer.width
 		property int newHeight: canvasContainer.height
 
-		width: implicitWidth
-		height: implicitHeight
-
 		onOpened: {
+			// load current canvas size
 			newWidth = canvasContainer.width
 			newHeight = canvasContainer.height
+			widthField.text = newWidth.toString()
+	        heightField.text = newHeight.toString()
 		}
 
-		contentItem: ColumnLayout {
-        spacing: 16
-        Layout.margins: 20  // padding around all content
+		ColumnLayout {
+			Layout.margins: 20
 
-        RowLayout {
-            spacing: 10
-            Layout.fillWidth: true
+			RowLayout {
+				spacing: 10
+				Label { text: "Width:" }
+				TextField {
+					id: widthField
+					text: resizeCanvasDialog.newWidth.toString()
+					validator: IntValidator { bottom: 1; top: 10000 } // only integers
+					inputMethodHints: Qt.ImhDigitsOnly
+					onTextChanged: {
+						if (text !== "") {
+							resizeCanvasDialog.newWidth = parseInt(text)
+						}
+					}
+				}
+			}
 
-            Label { text: "Width:" }
-            SpinBox {
-                id: widthField
-                from: 1
-                to: 10000
-                value: newWidth
-                Layout.fillWidth: true
-                onValueChanged: newWidth = value
-            }
-        }
+			RowLayout {
+				spacing: 10
+				Label { text: "Height:" }
+				TextField {
+					id: heightField
+					text: resizeCanvasDialog.newHeight.toString()
+					validator: IntValidator { bottom: 1; top: 10000 }
+					inputMethodHints: Qt.ImhDigitsOnly
+					onTextChanged: {
+						if (text !== "") {
+							resizeCanvasDialog.newHeight = parseInt(text)
+						}
+					}
+				}
+			}
+		}
 
-        RowLayout {
-            spacing: 10
-            Layout.fillWidth: true
-
-            Label { text: "Height:" }
-            SpinBox {
-                id: heightField
-                from: 1
-                to: 10000
-                value: newHeight
-                Layout.fillWidth: true
-                onValueChanged: newHeight = value
-            }
-        }
-
-        RowLayout {
-            spacing: 10
-            Layout.alignment: Qt.AlignHCenter
-
-            Button {
-                text: "OK"
-                onClicked: {
-                    painter.resizeCanvas(newWidth, newHeight)
-                    resizeCanvasDialog.accept()
-                }
-            }
-
-            Button {
-                text: "Cancel"
-                onClicked: resizeCanvasDialog.reject()
-            }
-        }
-    }
-}
-
+		onAccepted: {
+			console.log("Resizing canvas to", newWidth, "x", newHeight)
+			painter.resizeCanvas(newWidth, newHeight)
+		}
+	}
 	// left vertical bar with tools
 	Rectangle {
 		id: toolbar
