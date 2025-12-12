@@ -53,9 +53,10 @@ public:
     // expose the image buffer to QML
     Q_INVOKABLE QImage getBuffer() const;
 	Q_INVOKABLE void setPreview(bool show);
+	Q_INVOKABLE void clearBuffer(); // QML doesn't seem to be able to take function with optional parameters hence the overload
+	//TODO pattern preview in current color info Q_INVOKABLE QImage getPatternPreview(int width, int height, const QColor& color) const;
 
 	void clearBuffer(int width, int height);
-	void clearBuffer(); // QML doesn't seem to be able to take function with optional parameters hence the overload
     void flush(); // emit bufferChanged once per frame
 
 signals:

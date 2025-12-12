@@ -324,9 +324,12 @@ ApplicationWindow {
 			// separator
 			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
 
+			Text {
+				text: "Pattern:"
+			}
 			ComboBox {
 				id: patternSelector
-				width: parent.width - 10
+				width: parent.width
 				model: ["NONE", "CROSS", "DIAGCROSS", "DENSE"]
 				currentIndex: 0
 				onCurrentIndexChanged: {
@@ -341,10 +344,27 @@ ApplicationWindow {
 			}
 
 			// current color info
+			Text {
+				text: "Color:"
+			}
 			Column {
 				spacing: 3
 				anchors.left: parent.left
 				anchors.right: parent.right
+
+				/*Image {
+					id: patternPreview
+					width: parent.width - 10
+					height: 25
+					fillMode: Image.PreserveAspectFit
+					source: "image://painter/currentPattern?" + Math.random()
+
+					MouseArea {
+						anchors.fill: parent
+						onClicked: colorDialog.open()
+						cursorShape: Qt.PointingHandCursor
+					}
+				}*/
 
 				Rectangle {
 					width: parent.width - 10

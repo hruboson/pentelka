@@ -96,9 +96,10 @@ void Painter::selectNewText(){
 }
 
 void Painter::draw(const QPoint &from, const QPoint &to, const QColor &color, int width){
+	const Pattern* pat = nullptr;
+
 	switch(selectedTool){
 		case TOOLS::BRUSH: {
-            const Pattern* pat = nullptr;
             switch(selectedPattern){
                 case TOOLPATTERN::CROSS:
                     pat = &PATTERN_CROSS;
@@ -110,7 +111,6 @@ void Painter::draw(const QPoint &from, const QPoint &to, const QColor &color, in
                     pat = &PATTERN_DENSE;
                     break;
                 default:
-                    pat = nullptr;
                     break;
             }
             drawLine(from, to, color, width, pat);
@@ -123,7 +123,20 @@ void Painter::draw(const QPoint &from, const QPoint &to, const QColor &color, in
 			drawLine(from, to, backgroundColor, width);
 			break;
 		case TOOLS::FILL:
-			fillArea(to, color);
+            switch(selectedPattern){
+                case TOOLPATTERN::CROSS:
+                    pat = &PATTERN_CROSS;
+                    break;
+                case TOOLPATTERN::DIAGCROSS:
+                    pat = &PATTERN_DIAGCROSS;
+                    break;
+                case TOOLPATTERN::DENSE:
+                    pat = &PATTERN_DENSE;
+                    break;
+                default:
+                    break;
+            }
+			fillArea(to, color, pat);
 			break;
 		case TOOLS::TEXT:
 			break;
@@ -352,83 +365,118 @@ void Painter::sprayAt(const QPoint &pos, const QColor &color, int radius){
     pendingUpdate = true;
 }
 
-void Painter::fillArea(const QPoint &at, const QColor &color, const Pattern* pattern) {
+void Painter::fillArea(const QPoint &at, const QColor &color, const Pattern *pattern){
 	if (!image_buffer.rect().contains(at))
-		return;
+        return;
 
-	const QRgb oldColor = image_buffer.pixel(at);
-	const QRgb newColor = color.rgba();
-	if (oldColor == newColor)
-		return;
+    const QRgb oldColor = image_buffer.pixel(at);
+    const QRgb newColor = color.rgba();
+    if (oldColor == newColor)
+        return;
 
-	const int w = image_buffer.width();
-	const int h = image_buffer.height();
+    const int w = image_buffer.width();
+    const int h = image_buffer.height();
 
-	std::vector<QPoint> stack;
-	stack.reserve(8192);
-	stack.push_back(at);
+    std::vector<bool> visited(w * h, false);
 
-	while (!stack.empty()) {
-		QPoint p = stack.back();
-		stack.pop_back();
+    auto idx = [&](int x, int y){ return y * w + x; };
 
-		int x = p.x();
-		int y = p.y();
+    std::vector<QPoint> stack;
+    stack.reserve(8192);
+    stack.push_back(at);
 
-		// skip if out-of-bounds or not oldColor
-		if (y < 0 || y >= h) continue;
-		if (x < 0 || x >= w) continue;
-		if (image_buffer.pixelColor(x, y) != oldColor) continue;
+    while (!stack.empty()) {
+        QPoint p = stack.back();
+        stack.pop_back();
 
-		// left boundary
-		int lx = x;
-		while (lx - 1 >= 0 && image_buffer.pixelColor(lx - 1, y) == oldColor)
-			lx--;
+        int x = p.x();
+        int y = p.y();
 
-		// right boundary
-		int rx = x;
-		while (rx + 1 < w && image_buffer.pixelColor(rx + 1, y) == oldColor)
-			rx++;
+        if (x < 0 || x >= w || y < 0 || y >= h)
+            continue;
 
-		// fill span [lx, rx]
-		for (int px = lx; px <= rx; px++)
-			image_buffer.setPixelColor(px, y, color);
+        if (visited[idx(x, y)])
+            continue;
 
-		if (y > 0) {
-			int px = lx;
-			while (px <= rx) {
-				// skip non-target
-				while (px <= rx && image_buffer.pixelColor(px, y - 1) != oldColor)
-					px++;
-				if (px > rx) break;
+        if (image_buffer.pixel(x, y) != oldColor)
+            continue;
 
-				int start = px;
-				while (px <= rx && image_buffer.pixelColor(px, y - 1) == oldColor)
-					px++;
+        // Expand left
+        int lx = x;
+        while (lx > 0 &&
+               image_buffer.pixel(lx - 1, y) == oldColor &&
+               !visited[idx(lx - 1, y)])
+            lx--;
 
-				// push a single representative point for this run
-				stack.emplace_back((start + px - 1) / 2, y - 1);
+        // Expand right
+        int rx = x;
+        while (rx + 1 < w &&
+               image_buffer.pixel(rx + 1, y) == oldColor &&
+               !visited[idx(rx + 1, y)])
+            rx++;
+
+        // Fill span [lx, rx]
+        for (int px = lx; px <= rx; px++) {
+            visited[idx(px, y)] = true;
+
+            if (pattern){
+				int tx = ((px + selectedPatternOffset.first) % pattern->W + pattern->W) % pattern->W;
+				int ty = ((y + selectedPatternOffset.second) % pattern->H + pattern->H) % pattern->H;
+			
+				if (pattern->data[ty][tx] == 1) {
+					image_buffer.setPixelColor(px, y, color);
+				}
+			}else{
+				setPixel(px, y, color, 1);
 			}
-		}
+        }
 
-		if (y < h - 1) {
-			int px = lx;
-			while (px <= rx) {
-				while (px <= rx && image_buffer.pixelColor(px, y + 1) != oldColor)
-					px++;
-				if (px > rx) break;
+        // Scan upward
+        if (y > 0) {
+            int px = lx;
+            while (px <= rx) {
 
-				int start = px;
-				while (px <= rx && image_buffer.pixelColor(px, y + 1) == oldColor)
-					px++;
+                while (px <= rx &&
+                       (visited[idx(px, y - 1)] ||
+                        image_buffer.pixel(px, y - 1) != oldColor))
+                    px++;
+                if (px > rx) break;
 
-				stack.emplace_back((start + px - 1) / 2, y + 1);
-			}
-		}
-	}
+                int start = px;
 
-	pendingUpdate = true;
-}
+                while (px <= rx &&
+                       !visited[idx(px, y - 1)] &&
+                       image_buffer.pixel(px, y - 1) == oldColor)
+                    px++;
+
+                stack.emplace_back((start + px - 1) / 2, y - 1);
+            }
+        }
+
+        // Scan downward
+        if (y + 1 < h) {
+            int px = lx;
+            while (px <= rx) {
+
+                while (px <= rx &&
+                       (visited[idx(px, y + 1)] ||
+                        image_buffer.pixel(px, y + 1) != oldColor))
+                    px++;
+                if (px > rx) break;
+
+                int start = px;
+
+                while (px <= rx &&
+                       !visited[idx(px, y + 1)] &&
+                       image_buffer.pixel(px, y + 1) == oldColor)
+                    px++;
+
+                stack.emplace_back((start + px - 1) / 2, y + 1);
+            }
+        }
+    }
+
+    pendingUpdate = true;}
 
 /************************
  *		TEXT TOOLS 		*
@@ -677,3 +725,31 @@ void Painter::flush() {
 void Painter::setPreview(bool show){
 	showPreview = show;
 }
+
+/*QImage Painter::getPatternPreview(int width, int height, const QColor &color) const {
+    QImage preview(width, height, QImage::Format_ARGB32_Premultiplied);
+    preview.fill(Qt::white);
+
+    QPainter qPainter(&preview);
+    qPainter.setRenderHint(QPainter::Antialiasing);
+
+    // use the same draw function for consistency
+    QPoint from(0, 0);
+    QPoint to(width - 1, height - 1);
+
+    const Pattern* pat = nullptr;
+    switch(selectedPattern){
+        case TOOLPATTERN::CROSS: pat = &PATTERN_CROSS; break;
+        case TOOLPATTERN::DIAGCROSS: pat = &PATTERN_DIAGCROSS; break;
+        case TOOLPATTERN::DENSE: pat = &PATTERN_DENSE; break;
+        default: pat = nullptr; break;
+    }
+
+    // temporarily draw into the preview QImage
+    QImage originalBuffer = image_buffer;
+    const_cast<Painter*>(this)->image_buffer = preview;
+    const_cast<Painter*>(this)->drawLine(from, to, color, 10, pat);
+    const_cast<Painter*>(this)->image_buffer = originalBuffer;
+
+    return preview;
+}*/
