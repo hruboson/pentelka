@@ -246,6 +246,7 @@ ApplicationWindow {
 			painter.resizeCanvas(newWidth, newHeight)
 		}
 	}
+
 	// left vertical bar with tools
 	Rectangle {
 		id: toolbar
@@ -258,6 +259,7 @@ ApplicationWindow {
 
 		Column {
 			id: toolsColumn
+			width: 50
 			anchors.fill: parent
 			spacing: 10
 			anchors.margins: 5
@@ -321,6 +323,22 @@ ApplicationWindow {
 
 			// separator
 			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
+
+			ComboBox {
+				id: patternSelector
+				width: parent.width - 10
+				model: ["NONE", "CROSS", "DIAGCROSS", "DENSE"]
+				currentIndex: 0
+				onCurrentIndexChanged: {
+					switch(currentIndex) {
+						case 0: painter.selectPatternNONE(); break;
+						case 1: painter.selectPatternCROSS(); break;
+						case 2: painter.selectPatternDIAGCROSS(); break;
+						case 3: painter.selectPatternDENSE(); break;
+					}
+					console.log("Selected pattern:", currentText)
+				}
+			}
 
 			// current color info
 			Column {
@@ -480,6 +498,11 @@ ApplicationWindow {
 							// this line makes sure the caret is drawn even if text is empty
 							painter.updateText(canvasContainer.currentText, canvasContainer.lastPoint, root.penColor, textSizeInput.value)
 						} else {
+							// refresh pattern offset
+							var x = Math.floor(Math.random()*1000)
+							var y = Math.floor(Math.random()*1000)
+							painter.setNewPatternOffset(x, y)
+
 							painter.draw(canvasContainer.lastPoint, canvasContainer.lastPoint, penColor, strokeSlider.value)
 						}
 					}

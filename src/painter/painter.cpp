@@ -11,6 +11,8 @@
 #include <QPrinter>
 #include <QPrintDialog>
 
+//TODO namespace pentelka
+
 static inline int ipart(float x) { return static_cast<int>(std::floor(x)); }
 static inline float fpart(float x) { return x - std::floor(x); }
 static inline float rfpart(float x) { return 1 - fpart(x); }
@@ -48,6 +50,10 @@ Painter::Painter(QWidget* parentWidget, QObject *parent)
     caretTimer->start();*/
 }
 
+/******************
+ * TOOL SELECTORS *
+ *****************/
+
 void Painter::selectSpray(){
 	selectedTool = TOOLS::SPRAY;
 }
@@ -56,16 +62,25 @@ void Painter::selectBrush(){
 	selectedTool = TOOLS::BRUSH;
 }
 
-void Painter::selectBrushPatternCROSS(){
-	selectedBrushPattern = BRUSHPATTERNS::CROSS;
+void Painter::setNewPatternOffset(int x, int y){
+	selectedPatternOffset.first = x;
+	selectedPatternOffset.second = y;
 }
 
-void Painter::selectBrushPatternDIAGCROSS(){
-	selectedBrushPattern = BRUSHPATTERNS::DIAGCROSS;
+void Painter::selectPatternNONE(){
+	selectedPattern = TOOLPATTERN::NONE;
 }
 
-void Painter::selectBrushPatternDENSE(){
-	selectedBrushPattern = BRUSHPATTERNS::DENSE;
+void Painter::selectPatternCROSS(){
+	selectedPattern = TOOLPATTERN::CROSS;
+}
+
+void Painter::selectPatternDIAGCROSS(){
+	selectedPattern = TOOLPATTERN::DIAGCROSS;
+}
+
+void Painter::selectPatternDENSE(){
+	selectedPattern = TOOLPATTERN::DENSE;
 }
 
 void Painter::selectEraser(){
@@ -76,18 +91,6 @@ void Painter::selectFill(){
 	selectedTool = TOOLS::FILL;
 }
 
-void Painter::selectFillPatternCROSS(){
-	selectedFillPattern = FILLPATTERNS::CROSS;
-}
-
-void Painter::selectFillPatternDIAGCROSS(){
-	selectedFillPattern = FILLPATTERNS::DIAGCROSS;
-}
-
-void Painter::selectFillPatternDENSE(){
-	selectedFillPattern = FILLPATTERNS::DENSE;
-}
-
 void Painter::selectNewText(){
 	selectedTool = TOOLS::TEXT;
 }
@@ -95,15 +98,15 @@ void Painter::selectNewText(){
 void Painter::draw(const QPoint &from, const QPoint &to, const QColor &color, int width){
 	switch(selectedTool){
 		case TOOLS::BRUSH: {
-            const BrushPattern* pat = nullptr;
-            switch(selectedBrushPattern){
-                case BRUSHPATTERNS::CROSS:
+            const Pattern* pat = nullptr;
+            switch(selectedPattern){
+                case TOOLPATTERN::CROSS:
                     pat = &PATTERN_CROSS;
                     break;
-                case BRUSHPATTERNS::DIAGCROSS:
+                case TOOLPATTERN::DIAGCROSS:
                     pat = &PATTERN_DIAGCROSS;
                     break;
-                case BRUSHPATTERNS::DENSE:
+                case TOOLPATTERN::DENSE:
                     pat = &PATTERN_DENSE;
                     break;
                 default:
@@ -172,7 +175,7 @@ void Painter::setPixel(int x, int y, const QColor &color, int width) {
     pendingUpdate = true; // mark that buffer has changed
 }
 
-void Painter::setPixelPatterned(int x, int y, const QColor &color, int width, const BrushPattern* pattern) {
+void Painter::setPixelPatterned(int x, int y, const QColor &color, int width, const Pattern* pattern) {
     float r = width * 0.5f;
     float r2 = r * r;
 
@@ -197,10 +200,10 @@ void Painter::setPixelPatterned(int x, int y, const QColor &color, int width, co
                 continue;
 
             // pattern sampling stays 1:1, NOT scaled
-            int tx = (px % pattern->W + pattern->W) % pattern->W;
-            int ty = (py % pattern->H + pattern->H) % pattern->H;
+			int tx = ((px + selectedPatternOffset.first) % pattern->W + pattern->W) % pattern->W;
+			int ty = ((py + selectedPatternOffset.second) % pattern->H + pattern->H) % pattern->H;
 
-            if (pattern->data[ty][tx] == 1)
+			if (pattern->data[ty][tx] == 1)
                 image_buffer.setPixelColor(px, py, color);
         }
     }
@@ -208,7 +211,7 @@ void Painter::setPixelPatterned(int x, int y, const QColor &color, int width, co
     pendingUpdate = true;
 }
 
-void Painter::drawLine(const QPoint &from, const QPoint &to, const QColor &color, int width, const BrushPattern* pattern){
+void Painter::drawLine(const QPoint &from, const QPoint &to, const QColor &color, int width, const Pattern* pattern){
 	// Bresenham
 	int x0 = from.x();
     int y0 = from.y();
@@ -349,7 +352,7 @@ void Painter::sprayAt(const QPoint &pos, const QColor &color, int radius){
     pendingUpdate = true;
 }
 
-void Painter::fillArea(const QPoint &at, const QColor &color) {
+void Painter::fillArea(const QPoint &at, const QColor &color, const Pattern* pattern) {
 	if (!image_buffer.rect().contains(at))
 		return;
 

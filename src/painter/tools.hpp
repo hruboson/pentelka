@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+//TODO namespace Pentelka
+
 enum TOOLS {
 	BRUSH,
 	SPRAY,
@@ -10,24 +12,24 @@ enum TOOLS {
 	FILL,
 };
 
-/*******************
- *	BRUSH PATTERNS *
- ******************/
+/*************
+ *	PATTERNS *
+ ************/
 
-enum class BRUSHPATTERNS {
+enum class TOOLPATTERN {
 	NONE,
 	CROSS,
 	DIAGCROSS,
 	DENSE,
 };
 
-struct BrushPattern {
+struct Pattern {
     static const int W = 8;
     static const int H = 8;
     const uint8_t data[H][W];  // 0 = transparent, 1 = paint
 };
 
-static const BrushPattern PATTERN_CROSS = {
+static const Pattern PATTERN_CROSS = {
     {
         {0,0,1,0,0,1,0,0},
         {0,0,1,0,0,1,0,0},
@@ -40,7 +42,7 @@ static const BrushPattern PATTERN_CROSS = {
     }
 };
 
-static const BrushPattern PATTERN_DIAGCROSS = {
+static const Pattern PATTERN_DIAGCROSS = {
     {
         {1,0,0,0,0,0,0,1},
         {0,1,0,0,0,0,1,0},
@@ -53,7 +55,7 @@ static const BrushPattern PATTERN_DIAGCROSS = {
     }
 };
 
-static const BrushPattern PATTERN_DENSE = {
+static const Pattern PATTERN_DENSE = {
     {
         {1,0,1,0,1,0,1,0},
         {0,1,0,1,0,1,0,1},
@@ -64,15 +66,4 @@ static const BrushPattern PATTERN_DENSE = {
         {1,0,1,0,1,0,1,0},
         {0,1,0,1,0,1,0,1}
     }
-};
-
-/*****************
- * FILL PATTERNS *
- ****************/
-
-enum class FILLPATTERNS {
-	NONE,
-	CROSS,
-	DIAGCROSS,
-	DENSE,
 };
