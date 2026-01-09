@@ -12,6 +12,10 @@ It provides a canvas, multiple drawing tools (brush, spray, fill, text) and imag
 * Load/save images
 * Canvas resizing
 
+# Screenshot
+
+![Screenshot of Pentelka](./assets/screenshot.png)
+
 ## Building & Running
 
 Pentelka includes a Makefile that works on **Windows** and **Linux** and automatically uses **CMake + Ninja**.
