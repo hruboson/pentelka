@@ -4,19 +4,23 @@ pkgs.mkShell {
   name = "pentelka-dev-shell";
 
   buildInputs = with pkgs; [
-    # Toolchain
-    gcc
-    gdb
-    cmake
-    ninja
+	gcc
+	gdb
+	cmake
+	ninja
+	qtcreator
+	qt6.qtbase
+	qt6.qtdeclarative
+	qt6.qttools
 
-    # Qt6 (Widgets + QML)
-    qt6.qtbase
-    qt6.qtdeclarative
-    qt6.qttools
+	pkg-config
+  ];
 
-    # Optional but useful
-    pkg-config
+  nativeBuildInputs = with pkgs; [
+	cmake
+	ninja
+	pkg-config
+	qt6.wrapQtAppsHook 
   ];
 
   shellHook = ''
@@ -28,7 +32,7 @@ pkgs.mkShell {
     export QML2_IMPORT_PATH=${pkgs.qt6.qtdeclarative}/lib/qt-6/qml
 
     # Helps CMake find Qt
-    export CMAKE_PREFIX_PATH=${pkgs.qt6.qtbase}
+    export CMAKE_PREFIX_PATH="${pkgs.qt6.qtbase}:${pkgs.qt6.qtdeclarative}:$CMAKE_PREFIX_PATH"
   '';
 }
 
