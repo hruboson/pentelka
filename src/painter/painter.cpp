@@ -10,6 +10,7 @@
 #include <QUrl>
 #include <QPrinter>
 #include <QPrintDialog>
+#include <QFile>
 
 //TODO namespace pentelka
 
@@ -584,6 +585,10 @@ bool Painter::loadImage(const QString &path) {
     if (local.isEmpty())
         local = path;
 
+    if (local.endsWith(".bmp", Qt::CaseInsensitive)) {
+        return loadBMP(local);  // custom BMP loading logic
+    }
+
     QImage img;
     if (!img.load(local)) {
         qWarning() << "Failed to load image:" << path;
@@ -604,6 +609,119 @@ bool Painter::loadImage(const QString &path) {
     emit bufferChanged();
     emit imageSizeChanged(image_buffer.width(), image_buffer.height());
 
+    return true;
+}
+
+bool Painter::loadBMP(const QString &path) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "Failed to open BMP file:" << path;
+        return false;
+    }
+
+    QDataStream in(&file);
+    in.setByteOrder(QDataStream::LittleEndian);
+
+    // BMP FILE HEADER (14 bytes)
+    quint16 signature;
+    quint32 fileSize, reserved, dataOffset;
+    in >> signature;
+    if (signature != 0x4D42) { // 'BM'
+        qWarning() << "Not a valid BMP file signature";
+        return false;
+    }
+    in >> fileSize >> reserved >> dataOffset;
+
+    // DIB HEADER
+    quint32 dibHeaderSize;
+    in >> dibHeaderSize;
+
+    qint32 width = 0, height = 0;
+    quint16 planes = 0, bitsPerPixel = 0;
+    quint32 compression = 0;
+    quint32 colorsUsed = 0;
+
+    if (dibHeaderSize == 12) { // BITMAPCOREHEADER (OS/2)
+        quint16 w16, h16;
+        in >> w16 >> h16 >> planes >> bitsPerPixel;
+        width = w16; height = h16;
+    } else if (dibHeaderSize >= 40) { // BITMAPINFOHEADER or larger
+        in >> width >> height >> planes >> bitsPerPixel >> compression;
+        // Skip next 12 bytes to get to colorsUsed (imageSize, xPpm, yPpm)
+        in.skipRawData(12); 
+        in >> colorsUsed;
+    } else {
+        qWarning() << "Unsupported DIB header size:" << dibHeaderSize;
+        return false;
+    }
+
+    // DIMENSION CHECK - let's try not to overload the program
+    if (width <= 0 || std::abs(height) <= 0 || std::abs(height) > 10000 || width > 10000) {
+        qWarning() << "Invalid BMP dimensions:" << width << "x" << height;
+        return false;
+    }
+
+    bool topDown = (height < 0);
+    height = std::abs(height);
+
+    // COLOR TABLE (for 8-bit or less)
+    QVector<QRgb> colorTable;
+    if (bitsPerPixel <= 8) {
+        int numColors = (colorsUsed == 0) ? (1 << bitsPerPixel) : colorsUsed;
+        
+        // Get to the start of the table (Header + 14)
+        file.seek(14 + dibHeaderSize);
+        
+        for (int i = 0; i < numColors; ++i) {
+            quint8 b, g, r, a;
+            in >> b >> g >> r;
+            if (dibHeaderSize > 12) in >> a; // Windows headers use 4 bytes per entry
+            colorTable.append(qRgb(r, g, b));
+        }
+    }
+
+    // READ PIXEL DATA
+    QImage bmpImg(width, height, QImage::Format_ARGB32_Premultiplied);
+    file.seek(dataOffset); // Get directly to pixel data
+
+    int bytesPerLine = ((width * bitsPerPixel + 31) / 32) * 4;
+    QByteArray lineData(bytesPerLine, 0);
+
+    for (int y = 0; y < height; ++y) {
+        if (file.read(lineData.data(), bytesPerLine) != bytesPerLine) break;
+
+        int targetY = topDown ? y : (height - 1 - y);
+        const uchar* src = reinterpret_cast<const uchar*>(lineData.constData());
+
+        for (int x = 0; x < width; ++x) {
+            QRgb pixelColor;
+            if (bitsPerPixel == 24) {
+                pixelColor = qRgb(src[x*3+2], src[x*3+1], src[x*3]);
+            } else if (bitsPerPixel == 32) {
+                pixelColor = qRgba(src[x*4+2], src[x*4+1], src[x*4], src[x*4+3]);
+            } else if (bitsPerPixel == 8) {
+                pixelColor = colorTable.value(src[x], qRgb(0,0,0));
+            } else if (bitsPerPixel == 4) {
+                int val = (x % 2 == 0) ? (src[x/2] >> 4) : (src[x/2] & 0x0F);
+                pixelColor = colorTable.value(val, qRgb(0,0,0));
+            } else if (bitsPerPixel == 1) {
+                int val = (src[x/8] >> (7 - (x % 8))) & 0x01;
+                pixelColor = colorTable.value(val, qRgb(0,0,0));
+            }
+            bmpImg.setPixel(x, targetY, pixelColor);
+        }
+    }
+
+    // INITIALIZE BUFFER
+    image_buffer = std::move(bmpImg);
+    image_text_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+    image_text_buffer.fill(Qt::transparent);
+    preview_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
+    preview_buffer.fill(Qt::transparent);
+
+    pendingUpdate = true;
+    emit bufferChanged();
+    emit imageSizeChanged(image_buffer.width(), image_buffer.height());
     return true;
 }
 

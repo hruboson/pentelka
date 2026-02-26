@@ -46,6 +46,7 @@ public:
 	// utilities
 	void createBuffers(int width, int height, bool copyOldContent);
     Q_INVOKABLE bool loadImage(const QString &path);
+	bool loadBMP(const QString &path);
     Q_INVOKABLE bool saveImage(const QString &path);
 	Q_INVOKABLE void requestPrint();
 	Q_INVOKABLE void resizeCanvas(int width, int height);

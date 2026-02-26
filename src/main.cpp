@@ -16,9 +16,10 @@
 #endif
 
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
-    if (QString(context.category) == "qml") { // filter only messages created by app qml
+    /*if (QString(context.category) == "qml") { // filter only messages created by app qml
         QTextStream(stdout) << msg << Qt::endl;
-    }
+    }*/
+    QTextStream(stdout) << msg << Qt::endl;
 }
 
 int main(int argc, char *argv[])
