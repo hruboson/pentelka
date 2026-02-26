@@ -541,8 +541,46 @@ void Painter::commitText(){
  *		UTILITIES		*
  ***********************/
 
+void Painter::createBuffers(int width, int height, bool copyOldContent = false) {
+    if (width <= 0 || height <= 0) return;
+
+    QImage newMain(width, height, QImage::Format_ARGB32_Premultiplied);
+    newMain.fill(backgroundColor);
+
+    QImage newText(width, height, QImage::Format_ARGB32_Premultiplied);
+    newText.fill(Qt::transparent);
+
+    QImage newPrev(width, height, QImage::Format_ARGB32_Premultiplied);
+    newPrev.fill(Qt::transparent);
+
+    if (copyOldContent) {
+        int offsetX = (width - image_buffer.width()) / 2;
+        int offsetY = (height - image_buffer.height()) / 2;
+
+        QPainter pMain(&newMain);
+        pMain.drawImage(offsetX, offsetY, image_buffer);
+        pMain.end();
+
+        QPainter pText(&newText);
+        pText.drawImage(offsetX, offsetY, image_text_buffer);
+        pText.end();
+
+        QPainter pPrev(&newPrev);
+        pPrev.drawImage(offsetX, offsetY, preview_buffer);
+        pPrev.end();
+    }
+
+    image_buffer = std::move(newMain);
+    image_text_buffer = std::move(newText);
+    preview_buffer = std::move(newPrev);
+
+    pendingUpdate = true;
+    emit bufferChanged();
+    emit imageSizeChanged(width, height);
+}
+
 bool Painter::loadImage(const QString &path) {
-	QString local = QUrl(path).toLocalFile();
+    QString local = QUrl(path).toLocalFile();
     if (local.isEmpty())
         local = path;
 
@@ -552,11 +590,10 @@ bool Painter::loadImage(const QString &path) {
         return false;
     }
 
-	//TODO create a single resize function
-    // resize internal buffer to match loaded image
+    // Set main buffer to loaded image
     image_buffer = img.convertToFormat(QImage::Format_ARGB32_Premultiplied);
 
-    // resize text and preview buffers to match new size
+    // Resize text & preview buffers to match
     image_text_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
     image_text_buffer.fill(Qt::transparent);
 
@@ -566,6 +603,7 @@ bool Painter::loadImage(const QString &path) {
     pendingUpdate = true;
     emit bufferChanged();
     emit imageSizeChanged(image_buffer.width(), image_buffer.height());
+
     return true;
 }
 
@@ -608,52 +646,8 @@ void Painter::requestPrint() {
     painter.drawImage(targetRect, finalImage);
 }
 
-void Painter::resizeCanvas(int width, int height){
-	//TODO most of these sections should be their own functions because they might be used later
-	// e.g. create new buffers and replace existing, resize all buffers, ...
-	
-	if (width <= 0 || height <= 0)
-		return;
-
-	const int oldW = image_buffer.width();
-	const int oldH = image_buffer.height();
-
-	const int newW = width;
-	const int newH = height;
-
-	// create new centered buffers
-	QImage newMain(newW, newH, QImage::Format_ARGB32_Premultiplied);
-	QImage newText(newW, newH, QImage::Format_ARGB32_Premultiplied);
-	QImage newPrev(newW, newH, QImage::Format_ARGB32_Premultiplied);
-
-	newMain.fill(backgroundColor);
-	newText.fill(Qt::transparent);
-	newPrev.fill(Qt::transparent);
-
-	// compute top left where old image should be drawn in the new one
-	int offsetX = (newW - oldW) / 2;
-	int offsetY = (newH - oldH) / 2;
-
-	QPainter p1(&newMain);
-	p1.drawImage(offsetX, offsetY, image_buffer);
-	p1.end();
-
-	QPainter p2(&newText);
-	p2.drawImage(offsetX, offsetY, image_text_buffer);
-	p2.end();
-
-	QPainter p3(&newPrev);
-	p3.drawImage(offsetX, offsetY, preview_buffer);
-	p3.end();
-
-	// replace buffers
-	image_buffer = std::move(newMain);
-	image_text_buffer = std::move(newText);
-	preview_buffer = std::move(newPrev);
-
-	pendingUpdate = true;
-	emit bufferChanged();
-	emit imageSizeChanged(newW, newH);
+void Painter::resizeCanvas(int width, int height) {
+    createBuffers(width, height, true);
 }
 
 void Painter::resizeBuffer(int width, int height) {
@@ -682,19 +676,8 @@ void Painter::resizeBuffer(int width, int height) {
     emit imageSizeChanged(width, height);
 }
 
-void Painter::clearBuffer(int width = 800, int height = 600) {
-    image_buffer = QImage(width, height, QImage::Format_ARGB32_Premultiplied);
-    image_buffer.fill(Qt::white);
-
-    image_text_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
-    image_text_buffer.fill(Qt::transparent);
-
-    preview_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
-    preview_buffer.fill(Qt::transparent);
-
-    pendingUpdate = true;
-    emit bufferChanged();
-    emit imageSizeChanged(width, height);
+void Painter::clearBuffer(int width, int height) {
+    createBuffers(width, height, false);
 }
 
 void Painter::clearBuffer(){

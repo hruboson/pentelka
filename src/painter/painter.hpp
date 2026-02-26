@@ -44,6 +44,7 @@ public:
 	Q_INVOKABLE void commitText();
 
 	// utilities
+	void createBuffers(int width, int height, bool copyOldContent);
     Q_INVOKABLE bool loadImage(const QString &path);
     Q_INVOKABLE bool saveImage(const QString &path);
 	Q_INVOKABLE void requestPrint();
