@@ -14,6 +14,7 @@ class Painter : public QObject {
     Q_OBJECT
 public:
 	explicit Painter(QWidget* parentWidget, QObject* parent = nullptr);
+	bool currentLoadedBMP = false;
 
 	// main drawing function
 	Q_INVOKABLE void draw(const QPoint &from, const QPoint &to, const QColor &color, int width); // continuous function

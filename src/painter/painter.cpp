@@ -681,6 +681,7 @@ bool Painter::loadBMP(const QString &path) {
     }
 
     // READ PIXEL DATA
+	// QImage is optimized class for pixel access and manipulation
     QImage bmpImg(width, height, QImage::Format_ARGB32_Premultiplied);
     file.seek(dataOffset); // Get directly to pixel data
 
@@ -725,10 +726,21 @@ bool Painter::loadBMP(const QString &path) {
     return true;
 }
 
+bool saveBMP(const QString &path){
+	// TODO IMPLEMENT
+	
+	return false;
+}
+
 bool Painter::saveImage(const QString &path) {
     QString local = QUrl(path).toLocalFile();
     if (local.isEmpty())
         local = path;
+
+    if (local.endsWith(".bmp", Qt::CaseInsensitive)) {
+		//TODO implement saveBMP
+        return saveBMP(local);  // custom BMP saving logic
+    }
 
     // determine extension automatically from file name - QImage::save handles it
     bool ok = image_buffer.save(local);
