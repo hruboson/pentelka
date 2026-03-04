@@ -708,7 +708,6 @@ ApplicationWindow {
 			}
 
 			Text {
-				//TODO clickable link
 				text: "<a href=\"https://github.com/hruboson/pentelka\">https://github.com/hruboson/pentelka</a>"
             	color: "#ffca24"
 				horizontalAlignment: Text.AlignHCenter
