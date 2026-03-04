@@ -709,11 +709,22 @@ ApplicationWindow {
 
 			Text {
 				//TODO clickable link
-				text: "https://github.com/hruboson/pentelka"
+				text: "<a href=\"https://github.com/hruboson/pentelka\">https://github.com/hruboson/pentelka</a>"
             	color: "#ffca24"
 				horizontalAlignment: Text.AlignHCenter
 				wrapMode: Text.Wrap
 				anchors.horizontalCenter: parent.horizontalCenter
+
+				onLinkActivated: (link) => {
+					Qt.openUrlExternally(link)
+				}
+
+				// change cursor when hovering over link
+				MouseArea {
+					anchors.fill: parent
+					acceptedButtons: Qt.NoButton  // don't handle clicks, let the Text handle them
+					cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.ArrowCursor
+				}
 			}
 		}
 	}
