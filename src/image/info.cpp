@@ -52,3 +52,26 @@ QString ImageInfo::typeString() const {
         default: return "Unknown";
     }
 }
+
+QVariantList ImageInfo::colorTable() const {
+    QVariantList list;
+    for (const QRgb& color : m_colorTable) {
+        list.append(QColor(color));
+    }
+    return list;
+}
+
+void ImageInfo::setColorTable(const QVector<QRgb>& colors) {
+    m_colorTable = colors;
+    emit colorTableChanged();
+}
+
+void ImageInfo::addColor(const QColor& color) {
+    m_colorTable.append(color.rgba());
+    emit colorTableChanged();
+}
+
+void ImageInfo::clearColorTable() {
+    m_colorTable.clear();
+    emit colorTableChanged();
+}

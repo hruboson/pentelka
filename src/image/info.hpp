@@ -3,6 +3,8 @@
 #include "image/types.hpp"
 #include <QString>
 #include <QObject>
+#include <QColor>
+#include <QVariantList>
 
 class ImageInfo : public QObject {
     Q_OBJECT
@@ -12,6 +14,9 @@ class ImageInfo : public QObject {
     Q_PROPERTY(int fileSize READ fileSize WRITE setFileSize NOTIFY fileSizeChanged)
     Q_PROPERTY(int compression READ compression WRITE setCompression NOTIFY compressionChanged)
     Q_PROPERTY(QString typeString READ typeString NOTIFY typeChanged)
+
+    Q_PROPERTY(QVariantList colorTable READ colorTable NOTIFY colorTableChanged)
+    Q_PROPERTY(int colorCount READ colorCount NOTIFY colorTableChanged)
     
 public:
     explicit ImageInfo(QObject* parent = nullptr);
@@ -35,6 +40,12 @@ public:
     void setType(IMAGE_TYPE type);
     
     IMAGE_TYPE type() const { return m_type; }
+
+    QVariantList colorTable() const;
+    void setColorTable(const QVector<QRgb>& colors);
+    void addColor(const QColor& color);
+    void clearColorTable();
+    int colorCount() const { return m_colorTable.size(); }
     
 signals:
     void widthChanged();
@@ -43,6 +54,7 @@ signals:
     void fileSizeChanged();
     void compressionChanged();
     void typeChanged();
+    void colorTableChanged();
     
 private:
     int m_width = 0;
@@ -51,4 +63,5 @@ private:
     int m_fileSize = 0;
     int m_compression = 0;
     IMAGE_TYPE m_type = IMAGE_TYPE::UNKNOWN;
+    QVector<QRgb> m_colorTable;
 };

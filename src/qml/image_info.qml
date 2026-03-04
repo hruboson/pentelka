@@ -11,6 +11,9 @@ ApplicationWindow {
     
     // Receive the painter object
     property var painter: null
+
+    property int swatchSize: 16  // size of each color swatch
+    property int columns: 16      // number of columns in the grid
     
     Component.onCompleted: {
         if (painter) {
@@ -97,7 +100,69 @@ ApplicationWindow {
                 color: "#333333"
             }
         }
-        
+
+		ColumnLayout {
+			visible: painter && painter.imageInfo && painter.imageInfo.colorCount > 0
+			spacing: 10
+			Layout.fillWidth: true
+
+			Label {
+				text: "Color Table (" + painter.imageInfo.colorCount + " colors)"
+				font.bold: true
+				color: "#555555"
+				Layout.alignment: Qt.AlignHCenter
+			}
+
+			// flow layout - automatically wraps based on available width
+			Flow {
+				id: colorFlow 
+				Layout.fillWidth: true
+				spacing: 4
+
+				Repeater {
+					model: painter && painter.imageInfo ? painter.imageInfo.colorTable : []
+
+					Rectangle {
+						property int baseSize: Math.min(48, colorFlow.width / 8)
+						width: Math.max(24, baseSize)
+						height: width
+						color: modelData
+						border.color: "#999999"
+						border.width: 1
+						radius: 3
+
+						Text {
+							text: index
+							color: {
+								var c = parent.color
+								var brightness = (c.r * 0.299 + c.g * 0.587 + c.b * 0.114)
+								return brightness > 0.5 ? "#333333" : "white"
+							}
+							font.pixelSize: parent.width * 0.4
+							style: Text.Outline
+							styleColor: parent.color.hslLightness > 0.5 ? "white" : "#333333"
+						}
+
+						ToolTip {
+							visible: parentMouseArea.containsMouse
+							text: "Index: " + index + "\nRGB: " + 
+							Math.round(modelData.r * 255) + ", " +
+							Math.round(modelData.g * 255) + ", " +
+							Math.round(modelData.b * 255) + "\n" +
+							"Hex: " + modelData.toString().toUpperCase()
+							delay: 500
+						}
+
+						MouseArea {
+							id: parentMouseArea
+							anchors.fill: parent
+							hoverEnabled: true
+						}
+					}
+				}
+			}
+		}
+
         Rectangle {
             height: 1
             color: "#CCCCCC"

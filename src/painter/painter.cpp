@@ -717,9 +717,13 @@ bool Painter::loadBMP(const QString &path) {
             if (dibHeaderSize > 12) in >> a; // Windows headers use 4 bytes per entry
             colorTable.append(qRgb(r, g, b));
         }
+        this->imageInfo.setColorTable(colorTable);
+    } else {
+        // clear any existing color table for non-indexed images
+        this->imageInfo.clearColorTable();
     }
 
-	//TODO COLORS IN COLOR TABLE
+	
 
     // READ PIXEL DATA
 	// QImage is optimized class for pixel access and manipulation
