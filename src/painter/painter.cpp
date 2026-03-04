@@ -541,6 +541,182 @@ void Painter::commitText(){
     pendingUpdate = true;
 }
 
+void Painter::rotateImage(int degrees) {
+    // normalize degrees to 0-360 range
+    degrees = degrees % 360;
+    if (degrees < 0) degrees += 360;
+    
+    if (degrees != 90 && degrees != 180 && degrees != 270) {
+        qWarning() << "Only 90, 180, and 270 degree rotations are supported";
+        return;
+    }
+    
+    int oldWidth = image_buffer.width();
+    int oldHeight = image_buffer.height();
+    
+    int newWidth = (degrees == 90 || degrees == 270) ? oldHeight : oldWidth;
+    int newHeight = (degrees == 90 || degrees == 270) ? oldWidth : oldHeight;
+
+    int originalBPP = imageInfo->bitsPerPixel();
+    QImage::Format originalFormat = image_buffer.format();
+    
+    // vector of layers TODO move this to Painter class definition
+    std::vector<std::reference_wrapper<QImage>> layers = {
+        image_buffer,
+        image_text_buffer,
+        preview_buffer
+    };
+    
+    // layers for rotated image
+    std::vector<QImage> rotatedLayers;
+    rotatedLayers.reserve(layers.size());
+    
+	for (size_t i = 0; i < layers.size(); ++i) {
+		QImage newLayer(newWidth, newHeight, originalFormat);
+
+		if (i == 0) { // main buffer
+			if (originalFormat == QImage::Format_ARGB32_Premultiplied || 
+					originalFormat == QImage::Format_ARGB32) {
+				newLayer.fill(Qt::white);
+			} else {
+				newLayer.fill(backgroundColor.rgba());
+			}
+		} else { // text and preview buffers - always transparent
+			newLayer.fill(Qt::transparent);
+		}
+
+		rotatedLayers.push_back(std::move(newLayer));
+	}
+
+	for (size_t layerIdx = 0; layerIdx < layers.size(); ++layerIdx) {
+		const QImage& sourceLayer = layers[layerIdx].get();
+		QImage& targetLayer = rotatedLayers[layerIdx];
+
+		if (sourceLayer.isNull()) continue;
+
+		if (originalBPP <= 8 && layerIdx == 0) {
+			for (int y = 0; y < oldHeight; ++y) {
+				for (int x = 0; x < oldWidth; ++x) {
+					int pixelIndex = sourceLayer.pixelIndex(x, y); // get color table index
+
+					int newX, newY;
+					switch (degrees) {
+						case 90:
+							newX = y;
+							newY = newHeight - 1 - x;
+							break;
+						case 180:
+							newX = newWidth - 1 - x;
+							newY = newHeight - 1 - y;
+							break;
+						case 270:
+							newX = newWidth - 1 - y;
+							newY = x;
+							break;
+						default:
+							return;
+					}
+
+					targetLayer.setPixel(newX, newY, pixelIndex);
+				}
+			}
+		} else {
+			// ARGB format
+			for (int y = 0; y < oldHeight; ++y) {
+				for (int x = 0; x < oldWidth; ++x) {
+					QRgb pixel = sourceLayer.pixel(x, y);
+
+					int newX, newY;
+					switch (degrees) {
+						case 90:
+							newX = y;
+							newY = newHeight - 1 - x;
+							break;
+						case 180:
+							newX = newWidth - 1 - x;
+							newY = newHeight - 1 - y;
+							break;
+						case 270:
+							newX = newWidth - 1 - y;
+							newY = x;
+							break;
+						default:
+							return;
+					}
+
+					targetLayer.setPixel(newX, newY, pixel);
+				}
+			}
+		}
+	}
+    
+    // copy edited layers to original layer buffers
+    image_buffer = std::move(rotatedLayers[0]);
+    image_text_buffer = std::move(rotatedLayers[1]);
+    preview_buffer = std::move(rotatedLayers[2]);
+    
+    imageInfo->setWidth(image_buffer.width());
+    imageInfo->setHeight(image_buffer.height());
+    
+    pendingUpdate = true;
+    emit bufferChanged();
+    emit imageSizeChanged(image_buffer.width(), image_buffer.height());
+}
+
+void Painter::flipImage(AXIS axis) {
+    int width = image_buffer.width();
+    int height = image_buffer.height();
+    
+    // vector of layers TODO move this to Painter class definition
+    std::vector<std::reference_wrapper<QImage>> layers = {
+        image_buffer,
+        image_text_buffer,
+        preview_buffer
+    };
+    
+    // vector to store the new layers after flipping
+    std::vector<QImage> flippedLayers;
+    flippedLayers.reserve(layers.size());
+    
+    for (size_t i = 0; i < layers.size(); ++i) {
+        QImage newLayer(width, height, QImage::Format_ARGB32_Premultiplied);
+        newLayer.fill(Qt::transparent);
+        flippedLayers.push_back(std::move(newLayer));
+    }
+    
+    for (size_t layerIdx = 0; layerIdx < layers.size(); ++layerIdx) {
+        const QImage& sourceLayer = layers[layerIdx].get();
+        QImage& targetLayer = flippedLayers[layerIdx];
+        
+        if (sourceLayer.isNull()) continue;
+        
+        if (axis == AXIS::HORIZONTALLY) {
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    int newX = width - 1 - x;
+                    targetLayer.setPixel(newX, y, sourceLayer.pixel(x, y));
+                }
+            }
+        } 
+        else if (axis == AXIS::VERTICALLY) {
+            for (int y = 0; y < height; ++y) {
+                int newY = height - 1 - y;
+                for (int x = 0; x < width; ++x) {
+                    targetLayer.setPixel(x, newY, sourceLayer.pixel(x, y));
+                }
+            }
+        }
+    }
+    
+    // copy flipped layers to original layers
+    image_buffer = std::move(flippedLayers[0]);
+    image_text_buffer = std::move(flippedLayers[1]);
+    preview_buffer = std::move(flippedLayers[2]);
+    
+    pendingUpdate = true;
+    emit bufferChanged();
+}
+
 /************************
  *		UTILITIES		*
  ***********************/
@@ -598,10 +774,10 @@ bool Painter::loadImage(const QString &path) {
         return false;
     }
 
-    // Set main buffer to loaded image
+    // set main buffer to loaded image
     image_buffer = img.convertToFormat(QImage::Format_ARGB32_Premultiplied);
 
-    // Resize text & preview buffers to match
+    // resize text & preview buffers to match
     image_text_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
     image_text_buffer.fill(Qt::transparent);
 
@@ -619,7 +795,7 @@ bool Painter::loadImage(const QString &path) {
         file.close();
     }
     
-    // Set image type based on extension
+    // set image type based on extension
     if (local.endsWith(".png", Qt::CaseInsensitive)) {
         imageInfo->setType(IMAGE_TYPE::PNG);
     }

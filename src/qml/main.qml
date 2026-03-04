@@ -507,11 +507,13 @@ ApplicationWindow {
 			Button {
 				text: "Horizontally"
 				onClicked: {
+					painter.flipImage(0)
 				}
 			}
 			Button {
-				text: "Verticall"
+				text: "Vertically"
 				onClicked: {
+					painter.flipImage(1)
 				}
 			}
 
@@ -523,11 +525,13 @@ ApplicationWindow {
 			Button {
 				text: "CW 90°"
 				onClicked: {
+					painter.rotateImage(270)
 				}
 			}
 			Button {
 				text: "CCW 90°"
 				onClicked: {
+					painter.rotateImage(90)
 				}
 			}
 		}
@@ -743,8 +747,8 @@ ApplicationWindow {
 			canvasContainer.height = h
 
 			// center in parent
-			canvasContainer.anchors.horizontalCenter = parent.horizontalCenter
-			canvasContainer.anchors.verticalCenter = parent.verticalCenter
+			canvasContainer.anchors.horizontalCenter = root.horizontalCenter
+			canvasContainer.anchors.verticalCenter = root.verticalCenter
 
 			// ensure the Image isn't independently scaling
 			paintImage.fillMode = Image.PreserveAspectFit

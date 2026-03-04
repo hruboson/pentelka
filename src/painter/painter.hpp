@@ -11,6 +11,10 @@
 
 //TODO namespace pentelka
 
+enum AXIS {
+	HORIZONTALLY = 0, VERTICALLY = 1 // still don't know a good way to get enum into qml so for now numbers
+};
+
 class Painter : public QObject {
     Q_OBJECT
     Q_PROPERTY(ImageInfo* imageInfo READ getImageInfo CONSTANT) // exposes imageInfo to QML
@@ -36,6 +40,9 @@ public:
 	Q_INVOKABLE void selectPatternCROSS();
 	Q_INVOKABLE void selectPatternDIAGCROSS();
 	Q_INVOKABLE void selectPatternDENSE();
+
+	Q_INVOKABLE void rotateImage(int degrees);
+	Q_INVOKABLE void flipImage(AXIS axis);
 
 	// drawing tools
 	void setPixel(int x, int y, const QColor &color, int width);
