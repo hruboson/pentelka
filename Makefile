@@ -54,8 +54,10 @@ cmake_build:
 clean: clean_build
 ifeq ($(OS),Windows_NT)
 	del /q *.zip 2>NUL
+	rmdir /s /q $(BUILD_DIR)
 else
 	rm -f *.zip
+	rm -rf $(BUILD_DIR)
 endif
 
 clean_build:
