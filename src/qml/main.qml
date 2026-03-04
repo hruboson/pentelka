@@ -78,6 +78,11 @@ ApplicationWindow {
 			}
 
 			Action {
+				text: qsTr("Save &As BMP...")
+				onTriggered: selectBMPFolderDialog.open()
+			}
+
+			Action {
 				text: qsTr("&Print")
 				onTriggered: painter.requestPrint()
 			}
@@ -110,6 +115,18 @@ ApplicationWindow {
 		}
 
 		Menu {
+			title: qsTr("&View")
+			Action { 
+				text: qsTr("&Image Info") 
+				onTriggered: {
+					var component = Qt.createComponent("image_info.qml")
+		            var window    = component.createObject(root)
+					window.show()
+				}
+			}
+		}
+
+		Menu {
 			title: qsTr("&Help")
 			Action { 
 				text: qsTr("&About") 
@@ -138,6 +155,15 @@ ApplicationWindow {
 		onAccepted: {
 			pendingFolder = selectedFolder
 			fileNameDialog.open()
+		}
+	}
+
+	FolderDialog {
+		id: selectBMPFolderDialog
+		title: "Select Destination Folder"
+		onAccepted: {
+			pendingFolder = selectedFolder
+			fileNameBMPDialog.open()
 		}
 	}
 
@@ -176,6 +202,67 @@ ApplicationWindow {
 			}
 
 			let fullPath = pendingFolder + "/" + nameField.text
+			console.log("Saving to:", fullPath)
+
+			if (painter.saveImage(fullPath)) {
+				currentSavePath = fullPath
+			} else {
+				console.log("Failed to save image")
+			}
+		}
+	}
+
+	Dialog {
+		id: fileNameBMPDialog
+		title: "Enter BMP file name"
+		modal: true
+		x: (root.width - implicitWidth) / 2
+		y: (root.height - implicitHeight) / 2
+
+		standardButtons: Dialog.Ok | Dialog.Cancel
+
+		property alias fileName: nameBMPField.text
+
+		Column {
+			spacing: 10
+
+			TextField {
+				id: nameBMPField
+				placeholderText: "image-name.bmp"
+				text: "untitled.bmp"
+				width: 250
+
+				Keys.onPressed: (event) => {
+					if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+						event.accepted = true
+						fileNameBMPDialog.accept()
+					}
+				}
+			}
+
+			RowLayout {
+				RadioButton {
+					text: qsTr("1bit")
+				}
+				RadioButton {
+					text: qsTr("4bit")
+				}
+				RadioButton {
+					text: qsTr("8bit")
+				}
+				RadioButton {
+					checked: true
+					text: qsTr("24bit")
+				}
+			}
+		}
+
+		onAccepted: {
+			if (!fileName.includes(".")) {
+				nameBMPField.text = fileName + ".png" // default extension
+			}
+
+			let fullPath = pendingFolder + "/" + nameBMPField.text
 			console.log("Saving to:", fullPath)
 
 			if (painter.saveImage(fullPath)) {
@@ -396,6 +483,38 @@ ApplicationWindow {
 					font.pixelSize: 11
 					horizontalAlignment: Text.AlignHCenter
 					width: parent.width
+				}
+			}
+
+			// separator
+			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
+			Text {
+				text: "Flip"
+			}
+			Button {
+				text: "Horizontally"
+				onClicked: {
+				}
+			}
+			Button {
+				text: "Verticall"
+				onClicked: {
+				}
+			}
+
+			// separator
+			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
+			Text {
+				text: "Rotate"
+			}
+			Button {
+				text: "CW 90°"
+				onClicked: {
+				}
+			}
+			Button {
+				text: "CCW 90°"
+				onClicked: {
 				}
 			}
 		}

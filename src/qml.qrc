@@ -1,6 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>qml/main.qml</file>
+        <file>qml/image_info.qml</file>
         <file>qml/options.qml</file>
     </qresource>
 </RCC>
