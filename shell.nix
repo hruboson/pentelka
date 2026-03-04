@@ -33,6 +33,9 @@ pkgs.mkShell {
 
     # Helps CMake find Qt
     export CMAKE_PREFIX_PATH="${pkgs.qt6.qtbase}:${pkgs.qt6.qtdeclarative}:$CMAKE_PREFIX_PATH"
+
+	# Dude I hate this shit, without this it won't recompile qml...
+    export QML_DISABLE_DISK_CACHE=1
   '';
 }
 
