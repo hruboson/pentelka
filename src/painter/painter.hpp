@@ -13,13 +13,13 @@
 
 class Painter : public QObject {
     Q_OBJECT
-    Q_PROPERTY(ImageInfo* imageInfo READ getImageInfo CONSTANT)
+    Q_PROPERTY(ImageInfo* imageInfo READ getImageInfo CONSTANT) // exposes imageInfo to QML
 
 public:
 	explicit Painter(QWidget* parentWidget, QObject* parent = nullptr);
 	bool currentLoadedBMP = false;
 
-    ImageInfo* getImageInfo() { return &imageInfo; }
+    ImageInfo* getImageInfo() { return imageInfo; }
 
 	// main drawing function
 	Q_INVOKABLE void draw(const QPoint &from, const QPoint &to, const QColor &color, int width); // continuous function
@@ -54,6 +54,7 @@ public:
     Q_INVOKABLE bool loadImage(const QString &path);
 	bool loadBMP(const QString &path);
     Q_INVOKABLE bool saveImage(const QString &path);
+    bool saveBMP(const QString &path, int bpp);
 	Q_INVOKABLE void requestPrint();
 	Q_INVOKABLE void resizeCanvas(int width, int height);
     void resizeBuffer(int width, int height);
@@ -72,7 +73,7 @@ signals:
 	void imageSizeChanged(int width, int height);
 
 private:
-	ImageInfo imageInfo;
+	ImageInfo* imageInfo;
     QWidget* parentWidget;
 
 	QColor backgroundColor = Qt::white;

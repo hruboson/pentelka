@@ -22,6 +22,8 @@ static inline float rfpart(float x) { return 1 - fpart(x); }
 Painter::Painter(QWidget* parentWidget, QObject *parent)
     : QObject(parent),
       parentWidget(parentWidget) {
+
+	imageInfo = new ImageInfo(this);
     
 	image_buffer = QImage(800, 600, QImage::Format_ARGB32_Premultiplied);
     image_buffer.fill(Qt::white);
@@ -607,28 +609,28 @@ bool Painter::loadImage(const QString &path) {
     preview_buffer.fill(Qt::transparent);
 
     // POPULATE IMAGE INFO
-    imageInfo.setWidth(image_buffer.width());
-    imageInfo.setHeight(image_buffer.height());
-    imageInfo.setBitsPerPixel(image_buffer.depth());
+    imageInfo->setWidth(image_buffer.width());
+    imageInfo->setHeight(image_buffer.height());
+    imageInfo->setBitsPerPixel(image_buffer.depth());
 
     QFile file(local);
     if (file.open(QIODevice::ReadOnly)) {
-        imageInfo.setFileSize(file.size());
+        imageInfo->setFileSize(file.size());
         file.close();
     }
     
     // Set image type based on extension
     if (local.endsWith(".png", Qt::CaseInsensitive)) {
-        imageInfo.setType(IMAGE_TYPE::PNG);
+        imageInfo->setType(IMAGE_TYPE::PNG);
     }
     else if (local.endsWith(".jpg", Qt::CaseInsensitive) || local.endsWith(".jpeg", Qt::CaseInsensitive)) {
-        imageInfo.setType(IMAGE_TYPE::JPG);
+        imageInfo->setType(IMAGE_TYPE::JPG);
     }
     else if (local.endsWith(".bmp", Qt::CaseInsensitive)) {
-        imageInfo.setType(IMAGE_TYPE::BMP);
+        imageInfo->setType(IMAGE_TYPE::BMP);
     }
     else {
-        imageInfo.setType(IMAGE_TYPE::UNKNOWN);
+        imageInfo->setType(IMAGE_TYPE::UNKNOWN);
     }
 
     pendingUpdate = true;
@@ -636,10 +638,10 @@ bool Painter::loadImage(const QString &path) {
     emit imageSizeChanged(image_buffer.width(), image_buffer.height());
 
     qDebug() << "Loaded image:" << local
-             << "Size:" << imageInfo.width() << "x" << imageInfo.height()
-             << "BPP:" << imageInfo.bitsPerPixel()
-             << "Type:" << imageInfo.typeString()
-             << "File size:" << imageInfo.fileSize() << "bytes";
+             << "Size:" << imageInfo->width() << "x" << imageInfo->height()
+             << "BPP:" << imageInfo->bitsPerPixel()
+             << "Type:" << imageInfo->typeString()
+             << "File size:" << imageInfo->fileSize() << "bytes";
 
     return true;
 }
@@ -664,8 +666,8 @@ bool Painter::loadBMP(const QString &path) {
     }
     in >> fileSize >> reserved >> dataOffset;
 
-	this->imageInfo.setType(IMAGE_TYPE::BMP);
-	this->imageInfo.setFileSize(fileSize);
+	this->imageInfo->setType(IMAGE_TYPE::BMP);
+	this->imageInfo->setFileSize(fileSize);
 
     // DIB HEADER
     quint32 dibHeaderSize;
@@ -696,9 +698,9 @@ bool Painter::loadBMP(const QString &path) {
         return false;
     }
 
-	this->imageInfo.setWidth(width);
-	this->imageInfo.setHeight(height);
-	this->imageInfo.setBitsPerPixel(bitsPerPixel);
+	this->imageInfo->setWidth(width);
+	this->imageInfo->setHeight(height);
+	this->imageInfo->setBitsPerPixel(bitsPerPixel);
 
     bool topDown = (height < 0);
     height = std::abs(height);
@@ -717,10 +719,10 @@ bool Painter::loadBMP(const QString &path) {
             if (dibHeaderSize > 12) in >> a; // Windows headers use 4 bytes per entry
             colorTable.append(qRgb(r, g, b));
         }
-        this->imageInfo.setColorTable(colorTable);
+        this->imageInfo->setColorTable(colorTable);
     } else {
         // clear any existing color table for non-indexed images
-        this->imageInfo.clearColorTable();
+        this->imageInfo->clearColorTable();
     }
 
 	
@@ -771,7 +773,7 @@ bool Painter::loadBMP(const QString &path) {
     return true;
 }
 
-bool saveBMP(const QString &path){
+bool Painter::saveBMP(const QString &path, int bpp){
 	// TODO IMPLEMENT
 	
 	return false;
@@ -782,9 +784,9 @@ bool Painter::saveImage(const QString &path) {
     if (local.isEmpty())
         local = path;
 
-    if (local.endsWith(".bmp", Qt::CaseInsensitive)) {
+    if (local.endsWith(".bmp", Qt::CaseInsensitive) || this->imageInfo->type() == IMAGE_TYPE::BMP) {
 		//TODO implement saveBMP
-        return saveBMP(local);  // custom BMP saving logic
+        return saveBMP(local, this->imageInfo->bitsPerPixel());  // custom BMP saving logic
     }
 
     // determine extension automatically from file name - QImage::save handles it
@@ -852,6 +854,8 @@ void Painter::resizeBuffer(int width, int height) {
 }
 
 void Painter::clearBuffer(int width, int height) {
+    delete imageInfo;
+    imageInfo = new ImageInfo(this);
     createBuffers(width, height, false);
 }
 
