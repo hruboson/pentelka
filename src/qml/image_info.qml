@@ -107,7 +107,7 @@ ApplicationWindow {
 			Layout.fillWidth: true
 
 			Label {
-				text: "Color Table (" + painter.imageInfo.colorCount + " colors)"
+				text: "Color Table (" + (painter && painter.imageInfo && painter.imageInfo.colorCount > 0 ? painter.imageInfo.colorCount : "N/A")  + " colors)"
 				font.bold: true
 				color: "#555555"
 				Layout.alignment: Qt.AlignHCenter
