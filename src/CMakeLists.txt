@@ -27,7 +27,10 @@ set(PROJECT_SOURCES
     ${TS_FILES}
 
 	painter/painter.cpp
+	image/info.cpp
 )
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Executable
 qt_add_executable(${APP_NAME}

@@ -1,4 +1,5 @@
 #include "painter.hpp"
+#include "image/types.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -605,9 +606,40 @@ bool Painter::loadImage(const QString &path) {
     preview_buffer = QImage(image_buffer.size(), QImage::Format_ARGB32_Premultiplied);
     preview_buffer.fill(Qt::transparent);
 
+    // POPULATE IMAGE INFO
+    imageInfo.setWidth(image_buffer.width());
+    imageInfo.setHeight(image_buffer.height());
+    imageInfo.setBitsPerPixel(image_buffer.depth());
+
+    QFile file(local);
+    if (file.open(QIODevice::ReadOnly)) {
+        imageInfo.setFileSize(file.size());
+        file.close();
+    }
+    
+    // Set image type based on extension
+    if (local.endsWith(".png", Qt::CaseInsensitive)) {
+        imageInfo.setType(IMAGE_TYPE::PNG);
+    }
+    else if (local.endsWith(".jpg", Qt::CaseInsensitive) || local.endsWith(".jpeg", Qt::CaseInsensitive)) {
+        imageInfo.setType(IMAGE_TYPE::JPG);
+    }
+    else if (local.endsWith(".bmp", Qt::CaseInsensitive)) {
+        imageInfo.setType(IMAGE_TYPE::BMP);
+    }
+    else {
+        imageInfo.setType(IMAGE_TYPE::UNKNOWN);
+    }
+
     pendingUpdate = true;
     emit bufferChanged();
     emit imageSizeChanged(image_buffer.width(), image_buffer.height());
+
+    qDebug() << "Loaded image:" << local
+             << "Size:" << imageInfo.width() << "x" << imageInfo.height()
+             << "BPP:" << imageInfo.bitsPerPixel()
+             << "Type:" << imageInfo.typeString()
+             << "File size:" << imageInfo.fileSize() << "bytes";
 
     return true;
 }
@@ -631,6 +663,9 @@ bool Painter::loadBMP(const QString &path) {
         return false;
     }
     in >> fileSize >> reserved >> dataOffset;
+
+	this->imageInfo.setType(IMAGE_TYPE::BMP);
+	this->imageInfo.setFileSize(fileSize);
 
     // DIB HEADER
     quint32 dibHeaderSize;
@@ -661,6 +696,10 @@ bool Painter::loadBMP(const QString &path) {
         return false;
     }
 
+	this->imageInfo.setWidth(width);
+	this->imageInfo.setHeight(height);
+	this->imageInfo.setBitsPerPixel(bitsPerPixel);
+
     bool topDown = (height < 0);
     height = std::abs(height);
 
@@ -679,6 +718,8 @@ bool Painter::loadBMP(const QString &path) {
             colorTable.append(qRgb(r, g, b));
         }
     }
+
+	//TODO COLORS IN COLOR TABLE
 
     // READ PIXEL DATA
 	// QImage is optimized class for pixel access and manipulation

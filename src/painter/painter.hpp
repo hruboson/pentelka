@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tools.hpp"
+#include "image/info.hpp"
 
 #include <utility>
 
@@ -12,9 +13,13 @@
 
 class Painter : public QObject {
     Q_OBJECT
+    Q_PROPERTY(ImageInfo* imageInfo READ getImageInfo CONSTANT)
+
 public:
 	explicit Painter(QWidget* parentWidget, QObject* parent = nullptr);
 	bool currentLoadedBMP = false;
+
+    ImageInfo* getImageInfo() { return &imageInfo; }
 
 	// main drawing function
 	Q_INVOKABLE void draw(const QPoint &from, const QPoint &to, const QColor &color, int width); // continuous function
@@ -67,6 +72,7 @@ signals:
 	void imageSizeChanged(int width, int height);
 
 private:
+	ImageInfo imageInfo;
     QWidget* parentWidget;
 
 	QColor backgroundColor = Qt::white;

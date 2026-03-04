@@ -38,6 +38,8 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 	QQmlApplicationEngine engine;
 
+    qmlRegisterType<ImageInfo>("Pentelka", 1, 0, "ImageInfo");
+
 	QWidget* dialogParent = new QWidget();
 	dialogParent->setAttribute(Qt::WA_DontShowOnScreen, true);
 

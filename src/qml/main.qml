@@ -119,8 +119,21 @@ ApplicationWindow {
 			Action { 
 				text: qsTr("&Image Info") 
 				onTriggered: {
-					var component = Qt.createComponent("image_info.qml")
-		            var window    = component.createObject(root)
+					var component = Qt.createComponent("qrc:qml/image_info.qml")
+					if (component.status === Component.Error) {
+						console.log("Error loading component:", component.errorString())
+						return
+					}
+
+					var window = component.createObject(root)
+
+					if (window === null) {
+						console.log("Error creating object")
+						return
+					}
+
+					// Pass the painter object itself, not imageInfo property
+					window.painter = painter
 					window.show()
 				}
 			}
@@ -139,7 +152,7 @@ ApplicationWindow {
 		id: openDialog
 		title: "Open Image"
 		currentFolder: shortcuts.home
-		nameFilters: ["Images (*.png *.jpg *.bmp)"]
+		nameFilters: ["Images (*.png *.jpg *.bmp)"] // currently these three formats are supported 04.03.2026
 		onAccepted: {
 			if (painter.loadImage(selectedFile)) {
 				currentSavePath = selectedFile
