@@ -1,5 +1,6 @@
 #include "painter.hpp"
 #include "image/types.hpp"
+#include "image/info.hpp"
 
 #include <cmath>
 #include <iostream>
@@ -12,6 +13,7 @@
 #include <QPrinter>
 #include <QPrintDialog>
 #include <QFile>
+#include <QFileInfo>
 
 //TODO namespace pentelka
 
@@ -950,9 +952,253 @@ bool Painter::loadBMP(const QString &path) {
 }
 
 bool Painter::saveBMP(const QString &path, int bpp){
-	// TODO IMPLEMENT
-	
-	return false;
+    QString local = QUrl(path).toLocalFile();
+    if (local.isEmpty())
+        local = path;
+    
+    QFile file(local);
+    if (!file.open(QIODevice::WriteOnly)) {
+        qWarning() << "Failed to open file for writing:" << local;
+        return false;
+    }
+
+    QDataStream out(&file);
+    out.setByteOrder(QDataStream::LittleEndian);
+
+    int width = image_buffer.width();
+    int height = image_buffer.height();
+    
+    // check for supported bpp
+    if (bpp != 1 && bpp != 4 && bpp != 8 && bpp != 24) {
+        qWarning() << "Unsupported BMP bits per pixel:" << bpp;
+        return false;
+    }
+
+    // calculate bytes per line (padded to 4-byte boundary)
+    int bytesPerLine = ((width * bpp + 31) / 32) * 4;
+    int imageSize = bytesPerLine * height;
+    
+    int colorTableSize = 0;
+    QVector<QRgb> colorTable;
+    
+    if (bpp <= 8) {
+		if (bpp == 1) {
+			colorTable.clear();
+			colorTable.append(qRgb(0, 0, 0));     // black at index 0
+			colorTable.append(qRgb(255, 255, 255)); // white at index 1
+		} else if (imageInfo->colorCount() > 0) {
+            QVariantList variantColors = imageInfo->colorTable();
+            colorTable.reserve(variantColors.size());
+            for (const QVariant& var : variantColors) {
+                colorTable.append(var.value<QRgb>());
+            }
+        } else {
+            // generate colors for 4-bit and 8-bit
+            QSet<QRgb> uniqueColors;
+            for (int y = 0; y < height; ++y) {
+                for (int x = 0; x < width; ++x) {
+                    uniqueColors.insert(image_buffer.pixel(x, y) & 0x00FFFFFF); // ignore alpha
+                }
+            }
+            
+            // limit to max colors
+            QList<QRgb> colors = uniqueColors.values();
+            int maxColors = 1 << bpp;
+            
+            if (colors.size() > maxColors) {
+                colors = colors.mid(0, maxColors);
+            }
+            
+            colorTable = colors.toVector();
+            
+            // padding
+            int targetSize = 1 << bpp;
+            while (colorTable.size() < targetSize) {
+                colorTable.append(qRgb(0, 0, 0));
+            }
+        }
+        
+        colorTableSize = colorTable.size() * 4; // 4 bytes per entry
+        imageInfo->setColorTable(colorTable); // update imageInfo
+    } else {
+		// for images with no color table clear imageInfo color table
+        imageInfo->clearColorTable();
+    }
+
+    // calculate file offsets
+    int dibHeaderSize = 40; // BITMAPINFOHEADER
+    int dataOffset = 14 + dibHeaderSize + colorTableSize;
+    int fileSize = dataOffset + imageSize;
+
+    // write header
+    quint16 signature = 0x4D42; // 'BM'
+    quint32 reserved = 0;
+    
+    out << signature;
+    out << (quint32)fileSize;
+    out << reserved;
+    out << (quint32)dataOffset;
+
+    // write DIB HEADER
+    out << (quint32)dibHeaderSize;
+    out << (qint32)width;
+    out << (qint32)height;  // positive = bottom-up
+    out << (quint16)1;      // color planes
+    out << (quint16)bpp;
+    out << (quint32)0;      // compression
+    out << (quint32)imageSize;
+    out << (qint32)2835;    // horizontal resolution (72 DPI ≈ 2835 pixels/meter)
+    out << (qint32)2835;    // vertical resolution
+    out << (quint32)colorTable.size();  // colors used
+    out << (quint32)0;      // important colors (0 = all)
+
+    // write color table
+    if (bpp <= 8) {
+        for (const QRgb& color : colorTable) {
+            quint8 r = qRed(color);
+            quint8 g = qGreen(color);
+            quint8 b = qBlue(color);
+            quint8 reserved = 0;
+            
+            out << b << g << r << reserved;  // BMP uses BGR order
+        }
+    }
+
+    // write pixels
+    QByteArray lineData;
+    lineData.resize(bytesPerLine);
+    
+    for (int y = height - 1; y >= 0; --y) {  // BMP stores bottom-up
+        lineData.fill(0); // clear buffer
+        
+        if (bpp == 24) {
+            for (int x = 0; x < width; ++x) {
+                QRgb pixel = image_buffer.pixel(x, y);
+                lineData[x*3] = static_cast<char>(qBlue(pixel));
+                lineData[x*3 + 1] = static_cast<char>(qGreen(pixel));
+                lineData[x*3 + 2] = static_cast<char>(qRed(pixel));
+            }
+        }
+        else if (bpp == 8) {
+            for (int x = 0; x < width; ++x) {
+                QRgb pixel = image_buffer.pixel(x, y) & 0x00FFFFFF; // ignore alpha
+                
+                int bestIndex = 0;
+                int bestDist = INT_MAX;
+                
+                for (int i = 0; i < colorTable.size(); ++i) {
+                    QRgb palColor = colorTable[i];
+                    int dr = qRed(pixel) - qRed(palColor);
+                    int dg = qGreen(pixel) - qGreen(palColor);
+                    int db = qBlue(pixel) - qBlue(palColor);
+                    int dist = dr*dr + dg*dg + db*db;
+                    
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        bestIndex = i;
+                    }
+                }
+                
+                lineData[x] = static_cast<char>(bestIndex);
+            }
+        }
+        else if (bpp == 4) {
+            for (int x = 0; x < width; x += 2) {
+                QRgb pixel1 = image_buffer.pixel(x, y) & 0x00FFFFFF;
+                
+                int bestIndex1 = 0;
+                int bestDist1 = INT_MAX;
+                
+                for (int i = 0; i < colorTable.size(); ++i) {
+                    QRgb palColor = colorTable[i];
+                    int dr = qRed(pixel1) - qRed(palColor);
+                    int dg = qGreen(pixel1) - qGreen(palColor);
+                    int db = qBlue(pixel1) - qBlue(palColor);
+                    int dist = dr*dr + dg*dg + db*db;
+                    
+                    if (dist < bestDist1) {
+                        bestDist1 = dist;
+                        bestIndex1 = i;
+                    }
+                }
+                
+                quint8 byteVal = (bestIndex1 << 4);
+                
+                if (x + 1 < width) {
+                    QRgb pixel2 = image_buffer.pixel(x + 1, y) & 0x00FFFFFF;
+                    
+                    int bestIndex2 = 0;
+                    int bestDist2 = INT_MAX;
+                    
+                    for (int i = 0; i < colorTable.size(); ++i) {
+                        QRgb palColor = colorTable[i];
+                        int dr = qRed(pixel2) - qRed(palColor);
+                        int dg = qGreen(pixel2) - qGreen(palColor);
+                        int db = qBlue(pixel2) - qBlue(palColor);
+                        int dist = dr*dr + dg*dg + db*db;
+                        
+                        if (dist < bestDist2) {
+                            bestDist2 = dist;
+                            bestIndex2 = i;
+                        }
+                    }
+                    
+                    byteVal |= (bestIndex2 & 0x0F);
+                }
+                
+                lineData[x/2] = static_cast<char>(byteVal);
+            }
+        }
+        else if (bpp == 1) {
+            for (int x = 0; x < width; x += 8) {
+                quint8 byteVal = 0;
+                
+                for (int bit = 0; bit < 8; ++bit) {
+                    if (x + bit < width) {
+                        QRgb pixel = image_buffer.pixel(x + bit, y);
+                        
+                        int luminance = qGray(pixel);
+                        int bitVal = (luminance > 128) ? 1 : 0;
+                        
+                        byteVal |= (bitVal << (7 - bit));
+                    }
+                }
+                
+                lineData[x/8] = static_cast<char>(byteVal);
+            }
+        }
+        
+        // write the line using write() instead of QDataStream
+        qint64 bytesWritten = file.write(lineData);
+        if (bytesWritten != bytesPerLine) {
+            qWarning() << "Failed to write pixel data at line" << y 
+                       << "Expected:" << bytesPerLine 
+                       << "Written:" << bytesWritten;
+            file.close();
+            return false;
+        }
+    }
+
+    file.close();
+    
+    // update image info
+	imageInfo->setType(IMAGE_TYPE::BMP);
+    imageInfo->setBitsPerPixel(bpp);
+    imageInfo->setCompression(0);
+    imageInfo->setWidth(width);
+    imageInfo->setHeight(height);
+    
+    QFileInfo fileInfo(local);
+    if (fileInfo.exists()) {
+        imageInfo->setFileSize(fileInfo.size());
+    }
+    
+    qDebug() << "Successfully saved BMP:" << local
+             << "Size:" << width << "x" << height
+             << "BPP:" << bpp
+             << "File size:" << fileInfo.size();
+    
+    return true;
 }
 
 bool Painter::saveImage(const QString &path) {
@@ -960,9 +1206,12 @@ bool Painter::saveImage(const QString &path) {
     if (local.isEmpty())
         local = path;
 
-    if (local.endsWith(".bmp", Qt::CaseInsensitive) || this->imageInfo->type() == IMAGE_TYPE::BMP) {
-		//TODO implement saveBMP
-        return saveBMP(local, this->imageInfo->bitsPerPixel());  // custom BMP saving logic
+    if (local.endsWith(".bmp", Qt::CaseInsensitive)) {
+        int bpp = imageInfo->bitsPerPixel();
+        if (bpp != 1 && bpp != 4 && bpp != 8 && bpp != 24) {
+            bpp = 24;  // default to 24-bit if current bpp is unsupported
+        }
+        return saveBMP(local, bpp);
     }
 
     // determine extension automatically from file name - QImage::save handles it

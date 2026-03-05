@@ -61,7 +61,7 @@ public:
     Q_INVOKABLE bool loadImage(const QString &path);
 	bool loadBMP(const QString &path);
     Q_INVOKABLE bool saveImage(const QString &path);
-    bool saveBMP(const QString &path, int bpp);
+    Q_INVOKABLE bool saveBMP(const QString &path, int bpp);
 	Q_INVOKABLE void requestPrint();
 	Q_INVOKABLE void resizeCanvas(int width, int height);
     void resizeBuffer(int width, int height);

@@ -235,6 +235,7 @@ ApplicationWindow {
 		standardButtons: Dialog.Ok | Dialog.Cancel
 
 		property alias fileName: nameBMPField.text
+		property int selectedBPP: 24  // default to 24-bit
 
 		Column {
 			spacing: 10
@@ -256,32 +257,38 @@ ApplicationWindow {
 			RowLayout {
 				RadioButton {
 					text: qsTr("1bit")
+					onClicked: fileNameBMPDialog.selectedBPP = 1
 				}
 				RadioButton {
 					text: qsTr("4bit")
+					onClicked: fileNameBMPDialog.selectedBPP = 4 
 				}
 				RadioButton {
 					text: qsTr("8bit")
+					onClicked: fileNameBMPDialog.selectedBPP = 8 
 				}
 				RadioButton {
 					checked: true
 					text: qsTr("24bit")
+					onClicked: fileNameBMPDialog.selectedBPP = 24
 				}
 			}
 		}
 
 		onAccepted: {
 			if (!fileName.includes(".")) {
-				nameBMPField.text = fileName + ".png" // default extension
+				nameBMPField.text = fileName + ".bmp"
 			}
 
 			let fullPath = pendingFolder + "/" + nameBMPField.text
-			console.log("Saving to:", fullPath)
+			console.log("Saving BMP to:", fullPath, "with BPP:", selectedBPP)
 
-			if (painter.saveImage(fullPath)) {
+			// You'll need to modify painter.saveImage to accept bpp parameter
+			// or create a separate painter.saveBMP(fullPath, selectedBPP) method
+			if (painter.saveBMP(fullPath, selectedBPP)) {
 				currentSavePath = fullPath
 			} else {
-				console.log("Failed to save image")
+				console.log("Failed to save BMP image")
 			}
 		}
 	}
