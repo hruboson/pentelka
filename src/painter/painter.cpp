@@ -982,16 +982,11 @@ bool Painter::saveBMP(const QString &path, int bpp){
     QVector<QRgb> colorTable;
     
     if (bpp <= 8) {
-		if (bpp == 1) {
-			colorTable.clear();
-			colorTable.append(qRgb(0, 0, 0));     // black at index 0
-			colorTable.append(qRgb(255, 255, 255)); // white at index 1
-		} else if (imageInfo->colorCount() > 0) {
-            QVariantList variantColors = imageInfo->colorTable();
-            colorTable.reserve(variantColors.size());
-            for (const QVariant& var : variantColors) {
-                colorTable.append(var.value<QRgb>());
-            }
+        if (bpp == 1) {
+			// b&w image
+            colorTable.clear();
+            colorTable.append(qRgb(0, 0, 0));        // black at index 0
+            colorTable.append(qRgb(255, 255, 255));  // white at index 1
         } else {
             // generate colors for 4-bit and 8-bit
             QSet<QRgb> uniqueColors;
@@ -1000,7 +995,7 @@ bool Painter::saveBMP(const QString &path, int bpp){
                     uniqueColors.insert(image_buffer.pixel(x, y) & 0x00FFFFFF); // ignore alpha
                 }
             }
-            
+
             // limit to max colors
             QList<QRgb> colors = uniqueColors.values();
             int maxColors = 1 << bpp;
@@ -1081,8 +1076,9 @@ bool Painter::saveBMP(const QString &path, int bpp){
         }
         else if (bpp == 8) {
             for (int x = 0; x < width; ++x) {
-                QRgb pixel = image_buffer.pixel(x, y) & 0x00FFFFFF; // ignore alpha
+                QRgb pixel = image_buffer.pixel(x, y) & 0x00FFFFFF;
                 
+                // Find closest color in the palette
                 int bestIndex = 0;
                 int bestDist = INT_MAX;
                 
@@ -1157,6 +1153,7 @@ bool Painter::saveBMP(const QString &path, int bpp){
                     if (x + bit < width) {
                         QRgb pixel = image_buffer.pixel(x + bit, y);
                         
+                        // For 1-bit, use index 0 for dark colors, index 1 for light colors
                         int luminance = qGray(pixel);
                         int bitVal = (luminance > 128) ? 1 : 0;
                         
@@ -1182,7 +1179,7 @@ bool Painter::saveBMP(const QString &path, int bpp){
     file.close();
     
     // update image info
-	imageInfo->setType(IMAGE_TYPE::BMP);
+    imageInfo->setType(IMAGE_TYPE::BMP);
     imageInfo->setBitsPerPixel(bpp);
     imageInfo->setCompression(0);
     imageInfo->setWidth(width);
@@ -1196,6 +1193,7 @@ bool Painter::saveBMP(const QString &path, int bpp){
     qDebug() << "Successfully saved BMP:" << local
              << "Size:" << width << "x" << height
              << "BPP:" << bpp
+             << "Colors:" << colorTable.size()
              << "File size:" << fileInfo.size();
     
     return true;
