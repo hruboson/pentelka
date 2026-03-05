@@ -18,7 +18,7 @@ It provides a canvas, multiple drawing tools (brush, spray, fill, text) and imag
 
 Pentelka supports BMP files with various color depths:
 
-- **Opening BMPs**: You can open 1-bit, 4-bit, 8-bit, 24-bit, and 32-bit BMP files
+- **Opening BMPs**: You can open 1-bit, 4-bit, 8-bit and 24-bit BMP files
 - **Editing**: After opening, you can edit the image normally with all tools
 - **Saving**: 
   - Use **Save As BMP...** to choose a specific color depth (1-bit, 4-bit, 8-bit, or 24-bit)
