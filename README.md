@@ -10,7 +10,20 @@ It provides a canvas, multiple drawing tools (brush, spray, fill, text) and imag
 * Painting tools: brush, spray, eraser, fill, patterned paint and fill
 * Simple text tool
 * Load/save images
+* View image info
 * Canvas resizing
+* Flipping and rotating
+
+### BMP loading, editing and saving
+
+Pentelka supports BMP files with various color depths:
+
+- **Opening BMPs**: You can open 1-bit, 4-bit, 8-bit, 24-bit, and 32-bit BMP files
+- **Editing**: After opening, you can edit the image normally with all tools
+- **Saving**: 
+  - Use **Save As BMP...** to choose a specific color depth (1-bit, 4-bit, 8-bit, or 24-bit)
+  - Use regular **Save** for BMP files to keep the original color depth
+- **Color handling**: When saving as 1, 4, or 8-bit BMP, Pentelka automatically generates an optimized color palette from your image
 
 # Screenshot
 
@@ -19,6 +32,8 @@ It provides a canvas, multiple drawing tools (brush, spray, fill, text) and imag
 ## Building & Running
 
 Pentelka includes a Makefile that works on **Windows** and **Linux** and automatically uses **CMake + Ninja**.
+
+For those familiar with the Nix environment I've also included `shell.nix` file that creates a pre-made QT environment needed to build this project.
 
 #### Build
 
