@@ -27,7 +27,9 @@ Pentelka supports BMP files with various color depths:
 
 # Screenshot
 
-![Screenshot of Pentelka](./assets/screenshot.png)
+![Screenshot of Pentelka on Hyprland (NixOS)](./assets/screenshot_2.png)
+![Screenshot of Pentelka on Hyprland (NixOS) - color table](./assets/screenshot_3.png)
+![Screenshot of Pentelka on Windows](./assets/screenshot.png)
 
 ## Building & Running
 
