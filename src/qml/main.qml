@@ -350,188 +350,198 @@ ApplicationWindow {
 	// left vertical bar with tools
 	Rectangle {
 		id: toolbar
-		width: toolsColumn.implicitWidth + 10
+		width: 150  // Fixed width for toolbar
 		anchors.top: parent.top
 		anchors.bottom: parent.bottom
 		anchors.left: parent.left
 		color: "#EEEEEE"
 		z: 1
+		clip: true  // Prevent content from spilling out
 
-		Column {
-			id: toolsColumn
-			width: 50
+		ScrollView {
 			anchors.fill: parent
-			spacing: 10
-			anchors.margins: 5
+			contentWidth: availableWidth  // Don't scroll horizontally
+			contentHeight: toolsColumn.implicitHeight
+			ScrollBar.vertical.policy: ScrollBar.AsNeeded
+			ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
-			// brush type buttons
-			Button {
-				text: "Brush"
-				onClicked: {
-					painter.selectBrush()
-					textMode = false;
-					root.currentToolCursor = Qt.CrossCursor
-				}
-			}
-			Button {
-				text: "Spray"
-				onClicked: {
-					painter.selectSpray()
-					textMode = false;
-				}
-			}
-			Button {
-				text: "Eraser"
-				onClicked: {
-					painter.selectEraser();
-					textMode = false;
-					root.currentToolCursor = Qt.UpArrowCursor
-				}
-			}
-			Button {
-				text: "Fill"
-				onClicked: {
-					painter.selectFill();
-					textMode = false;
-					root.currentToolCursor = Qt.PointingHandCursor
-				}
-			}
-
-			// separator
-			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
-
-			Button {
-				text: "Text"
-				onClicked: {
-					painter.selectNewText()
-					painter.setPreview(true)
-					textMode = true
-					root.currentToolCursor = Qt.IBeamCursor
-					console.log("Entered text mode")
-				}
-			}
-
-			// Text size input
-			SpinBox {
-				id: textSizeInput
-				from: 1
-				to: 200
-				value: 15
-				width: 50
-				onValueChanged: painter.updateText(canvasContainer.currentText, canvasContainer.lastPoint, root.penColor, value)
-			}
-
-			// separator
-			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
-
-			Text {
-				text: "Pattern:"
-			}
-			ComboBox {
-				id: patternSelector
-				width: parent.width
-				model: ["NONE", "CROSS", "DIAGCROSS", "DENSE"]
-				currentIndex: 0
-				onCurrentIndexChanged: {
-					switch(currentIndex) {
-						case 0: painter.selectPatternNONE(); break;
-						case 1: painter.selectPatternCROSS(); break;
-						case 2: painter.selectPatternDIAGCROSS(); break;
-						case 3: painter.selectPatternDENSE(); break;
-					}
-					console.log("Selected pattern:", currentText)
-				}
-			}
-
-			// current color info
-			Text {
-				text: "Color:"
-			}
 			Column {
-				spacing: 3
-				anchors.left: parent.left
-				anchors.right: parent.right
+				id: toolsColumn
+				width: toolbar.width - 20  // Leave space for scrollbar
+				spacing: 10
+				padding: 5
 
-				/*Image {
-					id: patternPreview
-					width: parent.width - 10
-					height: 25
-					fillMode: Image.PreserveAspectFit
-					source: "image://painter/currentPattern?" + Math.random()
-
-					MouseArea {
-						anchors.fill: parent
-						onClicked: colorDialog.open()
-						cursorShape: Qt.PointingHandCursor
-					}
-				}*/
-
-				Rectangle {
-					width: parent.width - 10
-					height: 25
-					radius: 4
-					color: penColor
-					border.width: 1
-					border.color: "#555555"
-
-					MouseArea {
-						anchors.fill: parent
-						onClicked: colorDialog.open()
-						cursorShape: Qt.PointingHandCursor
+				// brush type buttons
+				Button {
+					text: "Brush"
+					width: parent.width
+					onClicked: {
+						painter.selectBrush()
+						textMode = false;
+						root.currentToolCursor = Qt.CrossCursor
 					}
 				}
+				Button {
+					text: "Spray"
+					width: parent.width
+					onClicked: {
+						painter.selectSpray()
+						textMode = false;
+					}
+				}
+				Button {
+					text: "Eraser"
+					width: parent.width
+					onClicked: {
+						painter.selectEraser();
+						textMode = false;
+						root.currentToolCursor = Qt.UpArrowCursor
+					}
+				}
+				Button {
+					text: "Fill"
+					width: parent.width
+					onClicked: {
+						painter.selectFill();
+						textMode = false;
+						root.currentToolCursor = Qt.PointingHandCursor
+					}
+				}
+
+				// separator
+				Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
+
+				Button {
+					text: "Text"
+					width: parent.width
+					onClicked: {
+						painter.selectNewText()
+						painter.setPreview(true)
+						textMode = true
+						root.currentToolCursor = Qt.IBeamCursor
+						console.log("Entered text mode")
+					}
+				}
+
+				// text size input
+				SpinBox {
+					id: textSizeInput
+					from: 1
+					to: 200
+					value: 15
+					width: parent.width
+					onValueChanged: painter.updateText(canvasContainer.currentText, canvasContainer.lastPoint, root.penColor, value)
+				}
+
+				// separator
+				Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
 
 				Text {
-					text: "RGB: " +
-					Math.round(penColor.r * 255) + ", " +
-					Math.round(penColor.g * 255) + ", " +
-					Math.round(penColor.b * 255)
-					font.pixelSize: 11
-					horizontalAlignment: Text.AlignHCenter
+					text: "Pattern:"
 					width: parent.width
+					horizontalAlignment: Text.AlignHCenter
+				}
+				ComboBox {
+					id: patternSelector
+					width: parent.width
+					model: ["NONE", "CROSS", "DIAGCROSS", "DENSE"]
+					currentIndex: 0
+					onCurrentIndexChanged: {
+						switch(currentIndex) {
+							case 0: painter.selectPatternNONE(); break;
+							case 1: painter.selectPatternCROSS(); break;
+							case 2: painter.selectPatternDIAGCROSS(); break;
+							case 3: painter.selectPatternDENSE(); break;
+						}
+						console.log("Selected pattern:", currentText)
+					}
 				}
 
+				// current color info
 				Text {
-					text: "HEX: " + penColor
-					font.pixelSize: 11
-					horizontalAlignment: Text.AlignHCenter
+					text: "Color:"
 					width: parent.width
+					horizontalAlignment: Text.AlignHCenter
 				}
-			}
+				Column {
+					spacing: 3
+					width: parent.width
 
-			// separator
-			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
-			Text {
-				text: "Flip"
-			}
-			Button {
-				text: "Horizontally"
-				onClicked: {
-					painter.flipImage(0)
-				}
-			}
-			Button {
-				text: "Vertically"
-				onClicked: {
-					painter.flipImage(1)
-				}
-			}
+					Rectangle {
+						width: parent.width
+						height: 25
+						radius: 4
+						color: penColor
+						border.width: 1
+						border.color: "#555555"
 
-			// separator
-			Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
-			Text {
-				text: "Rotate"
-			}
-			Button {
-				text: "CW 90°"
-				onClicked: {
-					painter.rotateImage(270)
+						MouseArea {
+							anchors.fill: parent
+							onClicked: colorDialog.open()
+							cursorShape: Qt.PointingHandCursor
+						}
+					}
+
+					Text {
+						text: "RGB: " +
+						Math.round(penColor.r * 255) + ", " +
+						Math.round(penColor.g * 255) + ", " +
+						Math.round(penColor.b * 255)
+						font.pixelSize: 11
+						horizontalAlignment: Text.AlignHCenter
+						width: parent.width
+					}
+
+					Text {
+						text: "HEX: " + penColor
+						font.pixelSize: 11
+						horizontalAlignment: Text.AlignHCenter
+						width: parent.width
+					}
 				}
-			}
-			Button {
-				text: "CCW 90°"
-				onClicked: {
-					painter.rotateImage(90)
+
+				// separator
+				Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
+				Text {
+					text: "Flip"
+					width: parent.width
+					horizontalAlignment: Text.AlignHCenter
+				}
+				Button {
+					text: "Horizontally"
+					width: parent.width
+					onClicked: {
+						painter.flipImage(0)
+					}
+				}
+				Button {
+					text: "Vertically"
+					width: parent.width
+					onClicked: {
+						painter.flipImage(1)
+					}
+				}
+
+				// separator
+				Rectangle { height: 1; width: parent.width; color: "#AAAAAA" }
+				Text {
+					text: "Rotate"
+					width: parent.width
+					horizontalAlignment: Text.AlignHCenter
+				}
+				Button {
+					text: "CW 90°"
+					width: parent.width
+					onClicked: {
+						painter.rotateImage(270)
+					}
+				}
+				Button {
+					text: "CCW 90°"
+					width: parent.width
+					onClicked: {
+						painter.rotateImage(90)
+					}
 				}
 			}
 		}
@@ -705,7 +715,7 @@ ApplicationWindow {
 			Text {
 				text: "Pentelka\nA simple drawing application."
 				font.pixelSize: 14
-	            color: "#000000"
+				color: "#000000"
 				horizontalAlignment: Text.AlignHCenter
 				wrapMode: Text.Wrap
 				anchors.horizontalCenter: parent.horizontalCenter
@@ -713,7 +723,7 @@ ApplicationWindow {
 
 			Text {
 				text: "<a href=\"https://github.com/hruboson/pentelka\">https://github.com/hruboson/pentelka</a>"
-            	color: "#ffca24"
+				color: "#ffca24"
 				horizontalAlignment: Text.AlignHCenter
 				wrapMode: Text.Wrap
 				anchors.horizontalCenter: parent.horizontalCenter
@@ -736,29 +746,29 @@ ApplicationWindow {
 	 * 		CONNECTIONS		 *
 	 ************************/
 
-	Connections {
-		target: painter
-		function onBufferChanged() {
-			paintImage.source = "image://painter/current?" + Math.random()
-		}
-		function onImageSizeChanged(w, h) {
-			console.log("Painter image size changed to", w, h)
-			canvasContainer.width = w
-			canvasContainer.height = h
+	 Connections {
+		 target: painter
+		 function onBufferChanged() {
+			 paintImage.source = "image://painter/current?" + Math.random()
+		 }
+		 function onImageSizeChanged(w, h) {
+			 console.log("Painter image size changed to", w, h)
+			 canvasContainer.width = w
+			 canvasContainer.height = h
 
-			// center in parent
-			canvasContainer.anchors.horizontalCenter = root.horizontalCenter
-			canvasContainer.anchors.verticalCenter = root.verticalCenter
+			 // center in parent
+			 canvasContainer.anchors.horizontalCenter = root.horizontalCenter
+			 canvasContainer.anchors.verticalCenter = root.verticalCenter
 
-			// ensure the Image isn't independently scaling
-			paintImage.fillMode = Image.PreserveAspectFit
-		}
-	}
+			 // ensure the Image isn't independently scaling
+			 paintImage.fillMode = Image.PreserveAspectFit
+		 }
+	 }
 
-	Connections {
-		target: root
-		function onRequestQuit() {
-			Qt.quit();
-		}
-	}
-}
+	 Connections {
+		 target: root
+		 function onRequestQuit() {
+			 Qt.quit();
+		 }
+	 }
+ }
